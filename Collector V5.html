@@ -1,0 +1,2817 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outbound Data Collector V5 live</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+    
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
+        
+        @keyframes pulse-orange { 0%, 100% { background-color: #ffedd5; } 50% { background-color: #fdba74; } }
+        .animate-pulse-orange { animation: pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        @keyframes pulse-blue { 0%, 100% { background-color: #dbeafe; } 50% { background-color: #93c5fd; } }
+        .animate-pulse-blue { animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes pulse-purple { 0%, 100% { background-color: #f3e8ff; } 50% { background-color: #d8b4fe; } }
+        .animate-pulse-purple { animation: pulse-purple 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        /* Van Haren Custom Colors */
+        .text-vh-orange { color: #ea580c; }
+        .bg-vh-orange { background-color: #ea580c; }
+        .bg-vh-orange-light { background-color: #ffedd5; }
+        .border-vh-orange { border-color: #ea580c; }
+        .hover\:bg-vh-orange-dark:hover { background-color: #c2410c; }
+
+        /* NL Specific Colors (ORANJE) */
+        .text-nl-orange { color: #ea580c; }
+        .bg-nl-orange { background-color: #ea580c; }
+        .bg-nl-orange-light { background-color: #ffedd5; }
+        .border-nl-orange { border-color: #ea580c; }
+
+        /* BE Specific Colors (GROEN) */
+        .text-be-green { color: #16a34a; }
+        .bg-be-green { background-color: #16a34a; }
+        .bg-be-green-light { background-color: #dcfce7; }
+        .border-be-green { border-color: #16a34a; }
+        
+        /* Fonts */
+        .font-barcode { font-family: 'Libre Barcode 128', cursive; font-size: 64px; line-height: 1; }
+        .font-signature { font-family: 'Great Vibes', cursive; }
+        .font-marker { font-family: 'Permanent Marker', cursive; }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Progress Bar Transition */
+        .progress-bar { transition: width 0.5s ease-in-out; }
+        
+        /* PRINT STYLES */
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .print-header-only { display: block !important; }
+            .print-break { page-break-inside: avoid; }
+            
+            /* Reset layout for print */
+            #root { width: 100%; margin: 0; padding: 0; }
+            .min-h-screen { padding: 0 !important; }
+            .max-w-7xl { max-width: none !important; margin: 0 !important; }
+            
+            /* Table Styling for Print */
+            table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: sans-serif; }
+            th { background-color: #f3f4f6 !important; color: black !important; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid #000; padding: 4px; }
+            td { border-bottom: 1px solid #ddd; padding: 4px; color: black !important; }
+            tr { break-inside: avoid; }
+            
+            /* Ensure signature is visible but small */
+            .font-signature { color: black !important; font-size: 12px !important; position: static !important; text-align: right; margin-top: 20px; }
+
+            /* Optimized Report Grid for Print */
+            .report-grid {
+                display: block !important;
+                column-count: 3;
+                column-gap: 15px;
+            }
+            
+            .report-card {
+                break-inside: avoid-column;
+                page-break-inside: avoid;
+                display: inline-block; /* Helps with column breaking */
+                width: 100%;
+                margin-bottom: 10px;
+                border: 1px solid #ccc !important;
+                background-color: white !important;
+                padding: 6px !important;
+                font-size: 11px;
+                box-shadow: none !important;
+                border-radius: 4px !important;
+            }
+            
+            /* Compact Card Content */
+            .report-card .text-2xl { font-size: 14px !important; line-height: 1.2; }
+            .report-card .text-lg { font-size: 12px !important; line-height: 1.2; }
+            .report-card .text-xs { font-size: 10px !important; }
+            .report-card .p-4 { padding: 0.5rem !important; }
+            
+            /* Hide visual bars in print to save space/ink */
+            .visual-bar-bg { display: none !important; }
+        }
+        /* Fix: ensure print-only class hides elements on screen but shows in print */
+        .print-only { display: none; }
+        @media print { .print-only { display: block; } }
+        
+        #crash-recovery {
+            position: fixed; top: 0; left: 0; width: 100%; background: #fee2e2; border-bottom: 1px solid #ef4444; 
+            padding: 10px; text-align: center; z-index: 9999; display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fallback / Reset UI for Edge Issues -->
+    <div id="crash-recovery" class="no-print">
+        <span class="text-red-800 font-bold text-sm">⚠️ App laadt niet? (Wit scherm)</span>
+        <button onclick="localStorage.clear(); window.location.reload();" class="bg-red-600 text-white px-3 py-1 rounded font-bold text-xs hover:bg-red-700">KLIK HIER VOOR HARDE RESET</button>
+        <span class="text-xs text-red-600">(Dit wist wel de historie!)</span>
+    </div>
+
+    <div id="root"></div>
+
+    <script>
+        // Global Error Handler to catch white screens
+        window.onerror = function(msg, url, line, col, error) {
+            var display = document.getElementById('root');
+            if(display && display.innerHTML.trim() === "") {
+                display.innerHTML = '<div style="padding:20px; color:red;"><h1>Er is een fout opgetreden (Wit Scherm)</h1><p>'+msg+'</p><p>Probeer de HARDE RESET knop hierboven.</p></div>';
+            }
+        };
+    </script>
+
+    <script type="text/babel">
+const firebaseConfig = {
+    apiKey: "AIzaSyCaNYwWw3JVw5Gpa6K2hw2NYFrck7gVwfc",
+    authDomain: "outbound-collector.firebaseapp.com",
+    databaseURL: "https://outbound-collector-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "outbound-collector",
+    storageBucket: "outbound-collector.firebasestorage.app",
+    messagingSenderId: "521080320500",
+    appId: "1:521080320500:web:ae798f8bef398b17b649a1"
+};
+
+// Initialiseer Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+        const { useState, useEffect, useRef } = React;
+
+        // Hide recovery bar if React loads successfully
+        setTimeout(() => {
+            const recovery = document.getElementById('crash-recovery');
+            if(recovery) recovery.style.display = 'none';
+        }, 3000); // Hide after 3s if no crash
+
+        // --- HELPER CONSTANTS FOR STATUS ---
+        // STATUS_GELADEN = Definitief in trailer (was VERZONDEN)
+        // STATUS_ONDERWEG = Gescannd aan band, onderweg naar dock (was ONDERWEG)
+        // HANDMATIG = Restant (telt als geladen/bezet)
+        // STATUS_BUFFER = Automatisch in buffer bij rood scherm voorscan
+        const STATUS_GELADEN = 'STATUS_GELADEN'; 
+        const STATUS_ONDERWEG = 'STATUS_ONDERWEG';
+        const STATUS_HANDMATIG = 'HANDMATIG';
+        const STATUS_BUFFER = 'STATUS_BUFFER';
+        
+        // Helper to map old statuses to new if needed, or just check compatibility
+        const isVisibleStatus = (status) => [STATUS_GELADEN, 'VERZONDEN', STATUS_HANDMATIG].includes(status);
+        const isCountableForCapacity = (status) => [STATUS_GELADEN, 'VERZONDEN', STATUS_HANDMATIG, STATUS_ONDERWEG, 'ONDERWEG'].includes(status);
+
+        // --- UI MODAL COMPONENTS ---
+        const Modal = ({ title, children, onClose, footer, wide }) => (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print animate-fade-in">
+                <div className={`bg-white rounded-xl shadow-2xl p-6 w-full ${wide ? 'max-w-4xl' : 'max-w-md'} transform transition-all scale-100 flex flex-col max-h-[90vh]`}>
+                    <div className="flex justify-between items-center mb-4 border-b pb-2">
+                        <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+                        <button onClick={onClose} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+                    </div>
+                    <div className="mb-6 text-gray-700 overflow-y-auto custom-scroll flex-1">
+                        {children}
+                    </div>
+                    {footer && (
+                        <div className="flex justify-end gap-2 pt-2 border-t mt-auto">
+                            {footer}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+
+        // --- AUDIO FUNCTION ---
+        const playSound = (type) => {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            if (type === 'success') {
+                osc.type = 'sine'; osc.frequency.value = 1200; gain.gain.value = 0.8; // Increased from 0.1 to 0.8
+                osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+                osc.stop(ctx.currentTime + 0.1);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth'; osc.frequency.value = 150; gain.gain.value = 1.0; // Increased from 0.2 to 1.0
+                osc.start(); gain.gain.linearRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+                osc.stop(ctx.currentTime + 0.5);
+            } else if (type === 'alert') {
+                osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 1.0; // Increased from 0.2 to 1.0
+                osc.start();
+                gain.gain.setValueAtTime(1.0, ctx.currentTime);
+                gain.gain.setValueAtTime(0, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(1.0, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0, ctx.currentTime + 0.3);
+                gain.gain.linearRampToValueAtTime(0.00001, ctx.currentTime + 0.6);
+                osc.stop(ctx.currentTime + 0.6);
+            } else if (type === 'info') {
+                osc.type = 'sine'; osc.frequency.value = 600; gain.gain.value = 0.6; // Increased from 0.1 to 0.6
+                osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.15);
+                osc.stop(ctx.currentTime + 0.15);
+            }
+        };
+
+        // --- ICONS ---
+        const Icon = ({ path, color="currentColor", size=24, className="" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
+
+        const Icons = {
+            Save: <Icon path={<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></>} />,
+            Alert: <Icon color="#dc2626" path={<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></>} />,
+            CheckCircle: <Icon color="#16a34a" path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></>} />,
+            XCircle: <Icon color="#9ca3af" path={<><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></>} />,
+            Clipboard: <Icon path={<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></>} />,
+            Download: <Icon path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></>} />,
+            ArrowRight: <Icon path={<><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></>} />,
+            Package: <Icon path={<><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></>} />,
+            ScanLine: <Icon path={<><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="12" x2="17" y2="12"></line></>} />,
+            Database: <Icon path={<><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></>} />,
+            FileText: <Icon path={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></>} />,
+            Layers: <Icon color="#eab308" path={<><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></>} />,
+            Trash: <Icon color="#ef4444" size={16} path={<><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></>} />,
+            Settings: <Icon path={<><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></>} />,
+            Truck: <Icon path={<><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></>} />,
+            Refresh: <Icon path={<><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></>} />,
+            Mail: <Icon path={<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></>} />,
+            Plus: <Icon path={<><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></>} />,
+            Upload: <Icon path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></>} />,
+            Flag: <Icon path={<><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></>} />,
+            Lock: <Icon path={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></>} />,
+            Unlock: <Icon path={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></>} />,
+            Link: <Icon path={<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></>} />,
+            Search: <Icon path={<><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></>} />,
+            Eye: <Icon path={<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></>} />,
+            Archive: <Icon path={<><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></>} />,
+        };
+
+        // --- SAFE STORAGE HELPERS ---
+        // Functie om veilig op te slaan zonder te crashen als geheugen vol is
+        const safeSetItem = (key, value) => {
+            try {
+                localStorage.setItem(key, value);
+            } catch (e) {
+                console.error("Storage limit reached or error:", e);
+                // Probeer eerst de credits image te wissen
+                if (key !== 'vh_credits_image') {
+                    localStorage.removeItem('vh_credits_image');
+                    try {
+                        localStorage.setItem(key, value);
+                    } catch(retryError) {
+                        // Nog steeds vol? Toon waarschuwing, maar crash niet.
+                        console.warn("Geheugen écht vol.");
+                    }
+                }
+            }
+        };
+
+        const defaultData = [
+            { id: "001", country: 'BE', route: "62 VL", naam: "Aalst", adres1: "Nieuwstraat 28", adres2: "9300 Aalst", adres3: "Oost Vlaanderen", max: 9, MA: "", DI: "X", WO: "", DO: "X", VR: "X", ZA: "", ZO: "" },
+        ];
+
+        const App = () => {
+            // --- STATE (Robust Initializers with White Screen Protection) ---
+            const [database, setDatabase] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('vh_db');
+                    let data = saved ? JSON.parse(saved) : defaultData;
+                    if(data.length > 0 && !data[0].country) {
+                        data = data.map(d => ({...d, country: 'BE'}));
+                    }
+                    // Safety check: ensure it's an array
+                    return Array.isArray(data) ? data.filter(Boolean) : defaultData; 
+                } catch(e) { 
+                    console.error("DB Init Error", e); 
+                    return defaultData; 
+                }
+            });
+            
+          // 1. STATE INITIALISATIE (Leeg beginnen, Firebase vult dit)
+            const [scanHistory, setScanHistory] = useState([]);
+            
+            // Standaard trailer waarden, worden overschreven door Firebase
+            const [trailerState, setTrailerState] = useState({
+                BE: { number: 1, count: 0 },
+                NL_TLB: { number: 1, count: 0 },
+                NL_BKR: { number: 1, count: 0 }
+            });
+
+            // 2. DE "OREN" VAN DE APP (Luistert naar de database)
+            useEffect(() => {
+                // A. Luister naar de scanlijst
+                const historyRef = db.ref('scanHistory');
+                
+                historyRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    // Firebase geeft een object { "id1": {...}, "id2": {...} }
+                    // Wij maken daar een lijst van [ {...}, {...} ]
+                    const list = data ? Object.values(data) : [];
+                    
+                    // Sorteer: Nieuwste bovenaan
+                    list.sort((a, b) => b.id - a.id);
+                    
+                    setScanHistory(list);
+                });
+
+                // B. Luister naar de Trailer statussen (Hoe vol ze zijn)
+                const trailerRef = db.ref('trailerState');
+                trailerRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        setTrailerState(data);
+                    }
+                });
+
+                // Opruimen als de app sluit (zodat hij niet dubbel luistert)
+                return () => {
+                    historyRef.off();
+                    trailerRef.off();
+                };
+            }, []); // De lege [] betekent: start dit alleen bij het laden van de pagina
+                    
+            // --- HERSTELDE VARIABELEN ---
+            const [trailerLimit, setTrailerLimit] = useState(() => {
+                const saved = localStorage.getItem('vh_trailer_limit');
+                const parsed = parseInt(saved);
+                return !isNaN(parsed) && parsed > 0 ? parsed : 44;
+            });
+
+            const [emailRecipient, setEmailRecipient] = useState(() => {
+                return localStorage.getItem('vh_email') || "";
+            });
+
+            const [skipDates, setSkipDates] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('vh_skip_dates');
+                    const parsed = saved ? JSON.parse(saved) : null;
+                    if (Array.isArray(parsed)) {
+                        return { BE: parsed, NL: parsed };
+                    }
+                    return parsed || { BE: [], NL: [] };
+                } catch(e) { return { BE: [], NL: [] }; }
+            });
+
+            const [settingsCountry, setSettingsCountry] = useState('BE'); 
+            const [historyTrailerFilter, setHistoryTrailerFilter] = useState('all');
+            const [historySearchQuery, setHistorySearchQuery] = useState('');       
+            // --- COUNTRY STATE ---
+            const [activeCountry, setActiveCountry] = useState(() => {
+                return localStorage.getItem('vh_active_country') || 'BE';
+            });
+            
+            // --- ACTIVE DEPOT STATE (FOR NL) ---
+            const [activeDepot, setActiveDepot] = useState(() => {
+                return localStorage.getItem('vh_active_depot') || 'TLB';
+            });
+            // ---------------------
+            
+            // --- SCAN MODE STATE: 'LADEN' (Dock) of 'VOORSCAN' (Band) ---
+            const [scanMode, setScanMode] = useState('LADEN'); // 'LADEN' of 'VOORSCAN'
+
+            const [selectedExportTrailer, setSelectedExportTrailer] = useState('current');
+            const [scanInput, setScanInput] = useState('');
+            const [scanResult, setScanResult] = useState(null);
+            
+            // --- NEW: DOUBLE CHECK STATE ---
+            const [doubleCheckMode, setDoubleCheckMode] = useState(() => {
+                return localStorage.getItem('vh_double_check') === 'true';
+            });
+            const [verificationId, setVerificationId] = useState(null); // Stores the 010 ID
+            const [exceptionMode, setExceptionMode] = useState(false); // Manual Toggle for Depot/Sale
+            
+            // --- REPORT FILTER STATE ---
+            const [reportFilter, setReportFilter] = useState('all'); 
+
+            // --- MODAL STATES ---
+            const [showReport, setShowReport] = useState(false);
+            const [showImport, setShowImport] = useState(false);
+            const [showBarcodePasteModal, setShowBarcodePasteModal] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [showTrailerModal, setShowTrailerModal] = useState(false); 
+            const [showManualModal, setShowManualModal] = useState(false);
+            const [showExportModal, setShowExportModal] = useState(false); // NEW: Export Modal
+            const [showBufferModal, setShowBufferModal] = useState(false); // NEW: Buffer Modal
+
+            const [includeRestants, setIncludeRestants] = useState(() => {
+                return localStorage.getItem('vh_include_restants') === 'true';
+            });
+            
+            useEffect(() => { safeSetItem('vh_include_restants', includeRestants); }, [includeRestants]);
+            
+            // UI Feedback Modals
+            const [uiMessage, setUiMessage] = useState({ open: false, title: '', message: '' });
+            const [uiConfirm, setUiConfirm] = useState({ open: false, title: '', message: '', onConfirm: null, onCancel: null, confirmLabel: 'OK', cancelLabel: 'Annuleren' });
+            const [importDecision, setImportDecision] = useState({ open: false, barcodes: [], targetCountry: null });
+            const [bufferImportText, setBufferImportText] = useState("");
+
+            // Import Country State - NOW SUPPORTS TLB/BKR
+            const [importMode, setImportMode] = useState('BE');  
+
+            const [manualInput, setManualInput] = useState('');
+            const [pasteData, setPasteData] = useState("");
+            const [barcodePasteText, setBarcodePasteText] = useState("");
+
+            // --- ADMIN STATE ---
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [showLogin, setShowLogin] = useState(false);
+            const [pinInput, setPinInput] = useState("");
+
+            const inputRef = useRef(null);
+            const manualInputRef = useRef(null);
+            const holidayInputRef = useRef(null);
+            const pinInputRef = useRef(null);
+
+            // --- CLEANUP ON LOAD ---
+            useEffect(() => {
+                // Remove legacy heavy items immediately
+                localStorage.removeItem('vh_credits_image');
+            }, []);
+
+            // --- UI HELPERS ---
+            const showAlert = (message, title = "Melding") => {
+                setUiMessage({ open: true, title, message });
+            };
+
+            const showConfirm = (message, onConfirm, title = "Bevestigen", confirmLabel = "JA, UITVOEREN") => {
+                setUiConfirm({ 
+                    open: true, 
+                    title, 
+                    message, 
+                    onConfirm: () => { onConfirm(); setUiConfirm(prev => ({ ...prev, open: false })); }, 
+                    onCancel: () => setUiConfirm(prev => ({ ...prev, open: false })),
+                    confirmLabel
+                });
+            };
+
+            // --- HELPER: GET CURRENT TRAILER KEY ---
+            const getCurrentTrailerKey = () => {
+                if (activeCountry === 'BE') return 'BE';
+                return `NL_${activeDepot}`; // NL_TLB or NL_BKR
+            };
+
+            // --- CRITICAL HELPERS ---
+            // Aangepast: Success count telt alleen wat ECHT in de trailer zit (STATUS_GELADEN/VERZONDEN)
+            const getSuccessCount = () => {
+                return scanHistory.filter(item => isVisibleStatus(item.status) && item.country === activeCountry).length;
+            };
+
+            const getTrailerStats = () => {
+                const key = getCurrentTrailerKey();
+                const stats = trailerState[key] || { number: 1, count: 0 };
+                return stats;
+            };
+
+            const trailerStats = getTrailerStats();
+
+    const getUniqueTrailers = () => {
+                const trailers = new Set();
+                scanHistory.forEach(item => {
+                    // Check of trailerNr bestaat en geen REST is
+                    if (item.trailerNr && item.trailerNr !== 'REST' && item.country === activeCountry) {
+                        // Alleen zichtbare items tellen mee
+                        if (isVisibleStatus(item.status)) {
+                            if(activeCountry === 'NL') {
+                                // Voor NL alleen als depot matcht
+                                if(item.depot === activeDepot) trailers.add(String(item.trailerNr));
+                            } else {
+                                // Voor BE alles
+                                trailers.add(String(item.trailerNr));
+                            }
+                        }
+                    }
+                });
+                
+                // Veilig toevoegen van huidige trailer (voorkomt crash als trailerStats even leeg is)
+                if (trailerStats && trailerStats.number) {
+                    trailers.add(String(trailerStats.number)); 
+                }
+                
+                return Array.from(trailers).sort((a, b) => parseInt(a) - parseInt(b));
+            };
+
+            // Opslaan in LocalStorage met SafeSetItem
+            useEffect(() => { safeSetItem('vh_db', JSON.stringify(database)); }, [database]);
+            // Only update history if changed, using safeSetItem
+            useEffect(() => { 
+                if(Array.isArray(scanHistory)) {
+                    safeSetItem('vh_history', JSON.stringify(scanHistory)); 
+                }
+            }, [scanHistory]);
+            useEffect(() => { safeSetItem('vh_trailer_limit', trailerLimit); }, [trailerLimit]);
+            useEffect(() => { safeSetItem('vh_trailer_state', JSON.stringify(trailerState)); }, [trailerState]);
+            useEffect(() => { safeSetItem('vh_email', emailRecipient); }, [emailRecipient]);
+            useEffect(() => { safeSetItem('vh_skip_dates', JSON.stringify(skipDates)); }, [skipDates]);
+            useEffect(() => { safeSetItem('vh_active_country', activeCountry); }, [activeCountry]);
+            useEffect(() => { safeSetItem('vh_active_depot', activeDepot); }, [activeDepot]);
+            useEffect(() => { safeSetItem('vh_double_check', doubleCheckMode); }, [doubleCheckMode]);
+
+            // RESET HISTORY FILTER ON CONTEXT CHANGE
+            useEffect(() => {
+                setHistoryTrailerFilter('all');
+                setHistorySearchQuery(''); // Reset search on country switch
+                setVerificationId(null); // Reset verification context on switch
+                setExceptionMode(false); // Reset manual exception on switch to be safe
+                setScanResult(null);
+            }, [activeCountry, activeDepot]);
+
+            useEffect(() => {
+                if (inputRef.current && !showReport && !showImport && !showBarcodePasteModal && !showSettings && !showTrailerModal && !showManualModal && !uiMessage.open && !uiConfirm.open && !importDecision.open && !showLogin && !showExportModal && !showBufferModal) {
+                    inputRef.current.focus();
+                } else if (showManualModal && manualInputRef.current) {
+                    manualInputRef.current.focus();
+                } else if (showLogin && pinInputRef.current) {
+                    pinInputRef.current.focus();
+                }
+            }, [scanHistory, scanResult, showReport, showImport, showBarcodePasteModal, showSettings, showTrailerModal, showManualModal, uiMessage, uiConfirm, importDecision, activeDepot, showLogin, showExportModal, scanMode, showBufferModal]);
+
+            // --- ADMIN LOGIC ---
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (pinInput === "9142") {
+                    setIsAdmin(true);
+                    setShowLogin(false);
+                    setPinInput("");
+                    showAlert("Admin modus geactiveerd.", "Ingelogd");
+                } else {
+                    playSound('error');
+                    setPinInput("");
+                    showAlert("Ongeldige PIN code.", "Fout");
+                }
+            };
+
+            const handleLogout = () => {
+                setIsAdmin(false);
+                showAlert("Admin modus gedeactiveerd.", "Uitgelogd");
+            };
+
+            // --- EXPORT & MAIL ---
+            const getTrailerData = (targetTrailerInput) => {
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+
+                let trailerNum = targetTrailerInput === 'current' ? trailerStats.number : parseInt(targetTrailerInput);
+                
+                const countryCode = activeCountry;
+                const randomDigits = Math.floor(1000000 + Math.random() * 9000000);
+                
+                let depotSuffix = "";
+                if(countryCode === 'NL') {
+                    depotSuffix = `_${activeDepot}`;
+                }
+
+                const filename = `${day}${month}${year}_${countryCode}${depotSuffix}_${randomDigits}.txt`;
+                
+                // EXPORT: Alleen status STATUS_GELADEN/VERZONDEN (en eventueel HANDMATIG indien ingesteld)
+                // We negeren STATUS_ONDERWEG items hier.
+                const items = scanHistory.filter(item => 
+                    item.trailerNr === trailerNum && 
+                    isVisibleStatus(item.status) && 
+                    item.country === activeCountry &&
+                    (activeCountry === 'BE' || item.depot === activeDepot)
+                );
+                
+                let content = "";
+                items.forEach(row => {
+                    // FIX: Changed \n to \r\n for CRLF line endings
+                    if(row.barcode && row.barcode !== '-') content += `${row.barcode}\r\n`;
+                });
+
+                return { filename, content, count: items.length, trailerNum };
+            };
+
+            const exportHistoryToTXT = () => {
+                if (scanHistory.length === 0) { showAlert("Geen data."); return; }
+                const { filename, content, count, trailerNum } = getTrailerData(selectedExportTrailer);
+                if (count === 0) { showAlert(`Geen scans gevonden voor Trailer ${trailerNum} (${activeCountry}${activeCountry==='NL'?'-'+activeDepot:''}).`); return; }
+                const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            const handleExportAllClick = () => {
+                if (scanHistory.length === 0) { showAlert("Geen data."); return; }
+                // Open modal for ALL countries to allow option selection
+                setShowExportModal(true);
+            };
+
+            const exportAllToTXT = (mode = 'CURRENT') => {
+                if (scanHistory.length === 0) { showAlert("Geen data."); return; }
+                
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+                
+                let depotSuffix = "";
+                let items = [];
+
+                // EXPORT LOGIC: Filter ONDERWEG eruit! Alleen GELADEN (en optioneel HANDMATIG)
+                // Logic for filters
+                const filterLogic = (item) => {
+                     const isSent = item.status === STATUS_GELADEN || item.status === 'VERZONDEN';
+                     const isRestant = includeRestants && item.status === STATUS_HANDMATIG;
+                     // NEVER include 'STATUS_ONDERWEG' in export
+                     return (isSent || isRestant);
+                };
+
+                if (activeCountry === 'NL') {
+                    if (mode === 'ALL_NL') {
+                        depotSuffix = "_Totaal_TLB_BKR"; 
+                        items = scanHistory.filter(item => filterLogic(item) && item.country === 'NL');
+                    } else {
+                        depotSuffix = `_${activeDepot}`;
+                        items = scanHistory.filter(item => filterLogic(item) && item.country === 'NL' && item.depot === activeDepot);
+                    }
+                } else {
+                    // BE Logic
+                    items = scanHistory.filter(item => filterLogic(item) && item.country === 'BE');
+                }
+                
+                const filename = `Totaal_${activeCountry}${depotSuffix}_${day}${month}${year}.txt`;
+                
+                if (items.length === 0) { showAlert(`Geen items gevonden voor export.`); return; }
+
+                let txtContent = "";
+                items.forEach(row => {
+                   if(row.barcode && row.barcode !== '-') {
+                       // FIX: Changed \n to \r\n for CRLF line endings
+                       txtContent += `${row.barcode}\r\n`;
+                   }
+                });
+
+                const blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setShowExportModal(false);
+            };
+
+            const exportHistoryToCSV = () => {
+                if (scanHistory.length === 0) { showAlert("Geen data om te exporteren."); return; }
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0].split('-').reverse().join(''); 
+                const filename = `${dateStr}_${activeCountry}.csv`;
+
+                let csvContent = "\uFEFF"; 
+                csvContent += "Barcode;Tijdstip;FiliaalID;Naam;Trailer;Land;Route/Depot;Status\n"; 
+
+                // Export current country View - EXCLUDE ONDERWEG for CSV as well to avoid confusion? 
+                // Or include for full audit? Let's exclude to match 'what is in the truck'.
+                const items = scanHistory.filter(item => 
+                    (item.country === activeCountry || !item.country) && 
+                    isVisibleStatus(item.status)
+                );
+
+                items.forEach(row => {
+                    const cleanBarcode = row.barcode ? row.barcode.replace(/[^0-9]/g, '') : '';
+                    const routeOrDepot = row.country === 'NL' ? (row.depot || row.route) : row.route;
+                    csvContent += `${cleanBarcode};"${row.timestamp}";"${row.storeId}";"${row.storeName}";"${row.trailerNr}";"${row.country||'BE'}";"${routeOrDepot||''}";"${row.status}"\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            const mailHistoryTXT = () => {
+                if (scanHistory.length === 0) { showAlert("Geen data."); return; }
+                const { filename, content, count, trailerNum } = getTrailerData(selectedExportTrailer);
+                if (count === 0) { showAlert(`Geen scans gevonden voor Trailer ${trailerNum} (${activeCountry}).`); return; }
+                
+                exportHistoryToTXT(); 
+
+                const subject = `Export: ${filename}`;
+                // FIX: Updated replace logic for CRLF compatibility
+                const mailContent = content.replace(/\r\n/g, '%0D%0A');
+                const body = `Hierbij de export voor Trailer ${trailerNum} - ${activeCountry} ${activeCountry==='NL'?activeDepot:''} (${count} collis).%0D%0A%0D%0ABijlage is zojuist gedownload. Inhoud:%0D%0A%0D%0A${mailContent}`;
+                
+                window.location.href = `mailto:${emailRecipient}?subject=${encodeURIComponent(subject)}&body=${body}`;
+            };
+
+             // --- BUFFER MANAGEMENT ---
+            
+            const getBufferStats = () => {
+                const bufferItems = scanHistory.filter(item => item.status === STATUS_BUFFER);
+                const counts = { BE: 0, TLB: 0, BKR: 0 };
+                // Also create lists per depot for display
+                const lists = { BE: [], TLB: [], BKR: [] };
+                
+                bufferItems.forEach(item => {
+                    let depot = 'BE';
+                    if (item.country === 'NL') {
+                        depot = item.depot === 'TLB' ? 'TLB' : 'BKR';
+                    } else if (item.country === 'BE') {
+                        depot = 'BE';
+                    }
+                    if (counts[depot] !== undefined) {
+                        counts[depot]++;
+                        lists[depot].push(item);
+                    }
+                });
+                return { items: bufferItems, counts, lists };
+            };
+
+            const exportBuffer = () => {
+                const { items } = getBufferStats();
+                if (items.length === 0) { showAlert("Buffer is leeg."); return; }
+                
+                let content = "";
+                items.forEach(item => {
+                    let depot = 'BE';
+                    if (item.country === 'NL') depot = item.depot;
+                    // Format: barcode;depot
+                    content += `${item.barcode};${depot}\r\n`;
+                });
+                
+                const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `Buffer_Export_${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+const removeFromBuffer = (id) => {
+                if(!window.confirm("Weet je zeker dat je dit item uit de buffer wilt verwijderen?")) return;
+                
+                setScanHistory(prev => prev.filter(item => item.id !== id));
+                playSound('alert'); // Kleine feedback geluid
+            };
+
+ const processBufferImport = (text = null) => {
+    // Support both textarea input and file input logic
+    const inputContent = text || bufferImportText;
+    
+    if (!inputContent || !inputContent.trim()) return;
+    const lines = inputContent.split('\n');
+    let added = 0;
+    let newHistory = [...scanHistory];
+    
+    lines.forEach(line => {
+        const parts = line.split(';');
+        // Support single barcode line OR barcode;depot
+        const barcode = parts[0].trim();
+        const depotHint = parts.length > 1 ? parts[1].trim().toUpperCase() : '';
+        
+        if (!barcode) return;
+        
+        // Derive store/country from barcode logic
+        // If barcode starts with 210, 3 digits ID.
+        let targetId = null;
+        if (barcode.startsWith("210") && barcode.length >= 6) {
+            targetId = barcode.substring(3, 6);
+        } else if (barcode.length <= 4 && !isNaN(parseInt(barcode))) {
+             targetId = barcode; // Direct ID
+        }
+        
+        if (targetId) {
+            const formattedId = targetId.padStart(3, '0');
+            // Try finding store based on hint or search both
+            let store = null;
+            if (depotHint === 'BE') store = database.find(s => s.id === formattedId && s.country === 'BE');
+            else if (depotHint === 'TLB' || depotHint === 'BKR') store = database.find(s => s.id === formattedId && s.country === 'NL' && s.depot === depotHint);
+            
+            // Fallback search
+            if (!store) store = database.find(s => s.id === formattedId);
+            
+            // Create phantom store if unknown but 210
+            if (!store && barcode.startsWith('210')) {
+                store = {
+                    id: formattedId,
+                    naam: 'Onbekend (Buffer)',
+                    country: depotHint === 'BE' ? 'BE' : 'NL', // Guess based on hint
+                    depot: depotHint || 'TLB', // Default fallback
+                    route: 'BUFFER',
+                    max: 9999
+                };
+            }
+            
+            if (store) {
+                const isDup = newHistory.some(h => h.barcode === barcode);
+                if (!isDup) {
+                    newHistory.unshift({
+                        id: Date.now() + Math.random(),
+                        timestamp: new Date().toLocaleTimeString(),
+                        storeId: store.id,
+                        storeName: store.naam,
+                        route: store.route,
+                        barcode: barcode,
+                        status: STATUS_BUFFER,
+                        deliveryDate: 'BUFFER',
+                        trailerNr: 'BUF',
+                        country: store.country,
+                        depot: store.depot || (store.country === 'NL' ? activeDepot : '') // Fallback active if unknown
+                    });
+                    added++;
+                }
+            }
+        }
+    });
+    
+    setScanHistory(newHistory);
+    setBufferImportText("");
+    showAlert(`${added} items toegevoegd aan buffer.`, "Buffer Import");
+};
+
+            const handleBufferFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const text = evt.target.result;
+                    processBufferImport(text);
+                };
+                reader.readAsText(file);
+                // Reset file input
+                e.target.value = '';
+            };
+
+const clearHistory = () => {
+                const countryToClear = activeCountry;
+                
+                showConfirm(`Weet je het zeker? Dit wist de Cloud historie voor ${countryToClear} én zet de trailer terug op 1.`, () => {
+                    
+                    // 1. Reset de Trailer Teller in de Cloud naar 1 (met count 0)
+                    if (countryToClear === 'BE') {
+                        db.ref('trailerState/BE').set({ number: 1, count: 0 });
+                    } else if (countryToClear === 'NL') {
+                        // Voor NL resetten we beide depots voor de zekerheid, of je kan splitsen
+                        db.ref('trailerState/NL_TLB').set({ number: 1, count: 0 });
+                        db.ref('trailerState/NL_BKR').set({ number: 1, count: 0 });
+                    }
+
+                    // 2. Verwijder de scans uit de Cloud
+                    // We lopen door de huidige lijst en verwijderen alles wat bij dit land hoort
+                    scanHistory.forEach(item => {
+                        if (item.country === countryToClear) {
+                            db.ref('scanHistory/' + item.id).remove();
+                        }
+                    });
+                    
+                    // Lokale UI resetten
+                    setScanResult(null);
+                    setVerificationId(null);
+                    
+                }, `Geschiedenis Wissen (${countryToClear})`, "Definitief Wissen & Resetten");
+            };
+
+            const clearDatabase = () => {
+                showConfirm(`LET OP: Dit wist de volledige filialen database voor ${activeCountry}. Weet u het zeker?`, () => {
+                    setDatabase(prev => prev.filter(item => item.country !== activeCountry));
+                    showAlert(`Database voor ${activeCountry} gewist.`, "Gereset");
+                }, `Database Wissen (${activeCountry})`);
+            };
+
+            const confirmTrailerSwitch = () => {
+                const closedTrailerNr = trailerStats.number;
+                const { content, filename, count } = getTrailerData(closedTrailerNr);
+                if (count > 0) {
+                    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                const depotPart = activeCountry === 'NL' ? ` ${activeDepot}` : '';
+                const subject = `Trailer ${closedTrailerNr} Vol - ${activeCountry}${depotPart} - ${new Date().toLocaleDateString('nl-NL')}`;
+                // FIX: Updated replace logic for CRLF compatibility
+                const mailContent = content.replace(/\r\n/g, '%0D%0A');
+                const body = `Trailer ${closedTrailerNr} is afgesloten (${count} stuks).%0D%0A%0D%0AHet exportbestand (${filename}) is gedownload naar uw PC.%0D%0A%0D%0AInhoud:%0D%0A${mailContent}`;
+                window.location.href = `mailto:${emailRecipient}?subject=${encodeURIComponent(subject)}&body=${body}`;
+                
+               // Update Firebase: Vertel de Cloud dat er een nieuwe trailer start
+                const trailerKey = getCurrentTrailerKey();
+                
+                // We gebruiken de huidige status uit het geheugen (die is up-to-date)
+                const currentStats = trailerState[trailerKey] || { number: 1, count: 0 };
+                
+                // Overschrijf de data in de Cloud: Nummer +1 en Teller op 0
+                db.ref(`trailerState/${trailerKey}`).set({
+                    number: currentStats.number + 1,
+                    count: 0
+                });
+                
+                setShowTrailerModal(false);
+                setScanInput('');
+                setVerificationId(null);
+            };
+
+            const manualTrailerSwitch = () => {
+                setShowTrailerModal(true);
+            };
+
+            // --- DATE HELPERS FOR SKIP (Country Aware) ---
+            const toISODate = (d) => {
+                 const z = n => ('0' + n).slice(-2);
+                 return d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate());
+            };
+
+            const isDateSkipped = (date, country) => {
+                const dateString = toISODate(date);
+                if (date.getDay() === 0 || date.getDay() === 6) return true;
+                const countrySkips = skipDates[country] || [];
+                return countrySkips.includes(dateString);
+            };
+
+            // --- DATA LOGICA ---
+            const getNextLogisticalDay = (country) => {
+                let d = new Date();
+                d.setDate(d.getDate() + 1); 
+                while (isDateSkipped(d, country)) {
+                    d.setDate(d.getDate() + 1);
+                }
+                return d;
+            };
+
+            const getDeliveryDateByBatch = (store, batchIndex) => {
+                if (store.country === 'NL') {
+                      const today = new Date();
+                      const day = String(today.getDate()).padStart(2, '0');
+                      const month = String(today.getMonth() + 1).padStart(2, '0');
+                      return { dateObj: today, dateString: `${day}-${month} (Dagbestand)`, dayName: 'NL' };
+                }
+
+                // BE LOGIC
+                // Check if store has schedule data. If not, simple Next Day logic.
+                const hasSchedule = store.MA || store.DI || store.WO || store.DO || store.VR || store.ZA || store.ZO;
+                
+                if (!hasSchedule) {
+                     // Simple logic for BE without schedule (Net als NL maar dan rekening houdend met next logistical day?)
+                     // Or just "Dagbestand" like NL?
+                     // Let's use getNextLogisticalDay to be safe regarding weekends.
+                     let checkDate = getNextLogisticalDay(store.country);
+                     // Format similar to NL
+                     const day = String(checkDate.getDate()).padStart(2, '0');
+                     const month = String(checkDate.getMonth() + 1).padStart(2, '0');
+                     const daysMap = ['ZO', 'MA', 'DI', 'WO', 'DO', 'VR', 'ZA'];
+                     return { dateObj: checkDate, dateString: `${day}-${month} (Lijst)`, dayName: daysMap[checkDate.getDay()] };
+                }
+
+                // Existing Schedule Logic
+                const daysMap = ['ZO', 'MA', 'DI', 'WO', 'DO', 'VR', 'ZA'];
+                let checkDate = getNextLogisticalDay(store.country);
+                let validDaysFound = 0;
+                for (let i = 0; i < 60; i++) {
+                    if (isDateSkipped(checkDate, store.country)) {
+                        checkDate.setDate(checkDate.getDate() + 1);
+                        continue;
+                    }
+                    const dayIndex = checkDate.getDay();
+                    const dayKey = daysMap[dayIndex];
+                    if (store[dayKey] && store[dayKey].trim() !== "") {
+                        if (validDaysFound === batchIndex) {
+                            return { dateObj: new Date(checkDate), dateString: checkDate.toLocaleDateString('nl-NL'), dayName: dayKey };
+                        }
+                        validDaysFound++;
+                    }
+                    checkDate.setDate(checkDate.getDate() + 1);
+                }
+                const fallback = new Date();
+                return { dateObj: fallback, dateString: fallback.toLocaleDateString('nl-NL'), dayName: daysMap[fallback.getDay()] };
+            };
+
+            // --- HOLIDAY MANAGEMENT (Country Aware) ---
+            const addHoliday = () => {
+                const val = document.getElementById('holidayInput').value;
+                if(val) {
+                    setSkipDates(prev => {
+                        const currentList = prev[settingsCountry] || [];
+                        if(!currentList.includes(val)) {
+                            return { ...prev, [settingsCountry]: [...currentList, val].sort() };
+                        }
+                        return prev;
+                    });
+                    document.getElementById('holidayInput').value = '';
+                }
+            };
+
+            const removeHoliday = (dateToRemove) => {
+                setSkipDates(prev => ({
+                    ...prev,
+                    [settingsCountry]: prev[settingsCountry].filter(d => d !== dateToRemove)
+                }));
+            };
+
+            // --- IMPORT LOGICA ---
+// --- ADMIN: PASTE 210 BARCODES (NO TXT UPLOAD) ---
+const extract210Barcodes = (text) => {
+    // 1. Clean: Remove ]C0 prefix
+    let cleaned = text.replace(/\]C0/g, ' ');
+    // 2. Normalize separators: Replace commas, tabs, newlines with spaces
+    cleaned = cleaned.replace(/[\n\r\t,;]/g, ' ');
+    // 3. Match: Find tokens starting with 210 followed by at least 3 digits (total 6 chars minimum)
+    // We stick to word boundaries (\b) to avoid partial matches inside longer strings,
+    // but the regex now accepts shorter barcodes (min 6 chars).
+    const matches = cleaned.match(/\b210\d{3,}\b/g); 
+    return matches ? Array.from(new Set(matches)) : [];
+};
+
+const handleBarcodePasteProcess = () => {
+    const raw = (barcodePasteText || '').trim();
+    if (!raw) {
+        showAlert("Plak eerst de 210 barcodes.", "Geen input");
+        return;
+    }
+
+    const extracted = extract210Barcodes(raw);
+    if (extracted.length === 0) {
+        showAlert("Geen geldige 210 barcodes gevonden. Controleer of de barcodes met 210 beginnen en minimaal 3 volgbare cijfers bevatten.", "Geen 210 gevonden");
+        return;
+    }
+
+    const MAX_LINES_LIMIT = 2000;
+    if (extracted.length > MAX_LINES_LIMIT) {
+        showAlert(`Te veel barcodes! Maximaal ${MAX_LINES_LIMIT} per keer.`, "Limiet");
+        return;
+    }
+
+    // Process for current active country (admin can switch BE/NL + depot first)
+    const targetCountry = activeCountry;
+    setShowBarcodePasteModal(false);
+    setBarcodePasteText('');
+    processImportData(extracted, targetCountry);
+};
+
+            const processImportData = (validBarcodes, targetCountry) => {
+                const hasExisting = targetCountry === 'NL'
+                    ? scanHistory.some(i => i.country === 'NL' && i.depot === activeDepot)
+                    : scanHistory.some(i => i.country === targetCountry);
+
+                if (hasExisting) {
+                    setImportDecision({ open: true, barcodes: validBarcodes, targetCountry });
+                } else {
+                    // Clear only the relevant country/depot (handled inside executeImport)
+                    executeImport(validBarcodes, true, targetCountry);
+                }
+            };
+
+            const executeImport = (validBarcodes, shouldClear, targetCountry) => {
+                const country = targetCountry || importDecision.targetCountry || activeCountry;
+                
+                const trailerKey = getCurrentTrailerKey();
+                const currentStats = trailerState[trailerKey] || { number: 1, count: 0 };
+                
+                let currentTrailerNr = shouldClear ? 1 : currentStats.number;
+                let currentCountInTrailer = shouldClear ? 0 : currentStats.count;
+                
+                let newEntries = [];
+                let addedCount = 0;
+                let skippedCount = 0; // Track skipped items
+                const timestampBase = new Date();
+
+                validBarcodes.forEach((code, index) => {
+                      let targetId = code.substring(3, 6);
+                      if (!isNaN(parseInt(targetId))) {
+                          const formattedId = targetId.padStart(3, '0');
+                          // 1. Zoek filiaal. Verwijderde fallback: zoek alleen in actief land/depot
+                          let store = database.find(s => s.id === formattedId && s.country === country);
+                          
+                          // STRICT CHECK: Only process if store exists in target country DB
+                          if (store) {
+                              // Extra check voor NL Depot
+                              if (country === 'NL') {
+                                  // Als de store een depot heeft en die matcht niet met de huidige actieve depot, skip hem.
+                                  if (store.depot && store.depot !== activeDepot) {
+                                      skippedCount++;
+                                      return; // Continue naar volgende iteratie
+                                  }
+                              }
+
+                              // Duplicate check logic
+                              const isDupInBatch = newEntries.some(h => h.barcode === code);
+                              let isDupInExisting = false;
+                              if (!shouldClear) {
+                                  isDupInExisting = scanHistory.some(h => h.barcode === code);
+                              }
+
+                              if (!isDupInBatch && !isDupInExisting) {
+                                  const entryDepot = store.depot || (country === 'NL' ? activeDepot : '');
+                                  const entryIncrement = 1;
+
+                                  if (currentCountInTrailer + entryIncrement > trailerLimit) {
+                                      currentTrailerNr++;
+                                      currentCountInTrailer = 0;
+                                  }
+                                  currentCountInTrailer += entryIncrement;
+                                  
+                                  newEntries.push({
+                                      id: Date.now() + index + Math.random(), 
+                                      timestamp: timestampBase.toLocaleTimeString(),
+                                      storeId: store.id,
+                                      storeName: store.naam,
+                                      route: store.route,
+                                      barcode: code,
+                                      status: STATUS_GELADEN, // Import is always direct load
+                                      deliveryDate: 'IMPORT',
+                                      trailerNr: currentTrailerNr,
+                                      country: store.country || country,
+                                      depot: entryDepot 
+                                  });
+                                  addedCount++;
+                              }
+                          } else {
+                              skippedCount++;
+                          }
+                      }
+                });
+
+                setScanHistory(prev => {
+                    let kept = prev;
+                    if(shouldClear) {
+                        if (country === 'NL') {
+                            kept = prev.filter(i => !(i.country === 'NL' && i.depot === activeDepot));
+                        } else {
+                            kept = prev.filter(i => i.country !== country);
+                        }
+                    }
+                    // SAFE CONCAT
+                    return newEntries.reverse().concat(kept);
+                });
+
+                setTrailerState(prev => ({
+                    ...prev,
+                    [trailerKey]: { number: currentTrailerNr, count: currentCountInTrailer }
+                }));
+
+                setImportDecision({ open: false, barcodes: [], targetCountry: null });
+                setShowBarcodePasteModal(false);
+                
+                let alertMsg = `Klaar! ${addedCount} barcodes verwerkt voor ${country}.`;
+                if (skippedCount > 0) {
+                    alertMsg += `\n⚠️ ${skippedCount} barcodes overgeslagen (onbekend filiaal in ${country} of verkeerd depot).`;
+                }
+                alertMsg += `\nHuidige Trailer is nu: ${currentTrailerNr} (Aantal: ${currentCountInTrailer})`;
+                
+                showAlert(alertMsg, "Import Resultaat");
+            };
+
+
+            const handlePasteImport = () => {
+                if (!pasteData.trim()) return;
+                const rows = pasteData.trim().split('\n');
+                
+                let newDB = [...database];
+                
+                if (importMode === 'BE') {
+                    newDB = newDB.filter(s => s.country !== 'BE');
+                } else if (importMode === 'NL_TLB') {
+                    newDB = newDB.filter(s => !(s.country === 'NL' && s.depot === 'TLB'));
+                } else if (importMode === 'NL_BKR') {
+                    newDB = newDB.filter(s => !(s.country === 'NL' && s.depot === 'BKR'));
+                }
+
+                let successCount = 0;
+                const firstLine = rows[0];
+                let delimiter = '\t'; 
+                if (firstLine.includes(';') && !firstLine.includes('\t')) delimiter = ';';
+                else if (firstLine.includes(',') && !firstLine.includes('\t')) delimiter = ',';
+
+                const headers = firstLine.split(delimiter).map(h => h.trim().toLowerCase());
+                let maxIndex = headers.findIndex(h => h.includes('max') || h.includes('aantal'));
+                if (maxIndex === -1) maxIndex = 13; 
+                
+                let startIndex = 0;
+                if (headers.some(h => h.includes('route') || h.includes('id') || h.includes('naam'))) {
+                    startIndex = 1;
+                }
+
+                for (let i = startIndex; i < rows.length; i++) {
+                    if (!rows[i].trim()) continue;
+                    const cols = rows[i].split(delimiter);
+                    if (cols.length < 2) continue;
+
+                    const clean = (val) => val ? val.replace(/['"]+/g, '').trim() : "";
+                    let store = {};
+
+                    if (importMode === 'BE') {
+                          // NEW BE LOGIC (Same as NL)
+                        let idVal = clean(cols[0]);
+                        if (idVal) { idVal = idVal.padStart(3, '0'); }
+
+                        let nameVal = clean(cols[1]);
+                        let maxVal = 100; // Default max for BE? Or 500 like NL? Let's stick to reading col 2.
+                        if (cols[2]) {
+                            const parsed = parseInt(clean(cols[2]));
+                            if (!isNaN(parsed) && parsed > 0) maxVal = parsed;
+                        } else {
+                             // Fallback default if not provided? Original BE default was 100.
+                             maxVal = 100; 
+                        }
+                        
+                        store = {
+                            country: 'BE',
+                            // No depot specific logic for BE usually, or just empty?
+                            // Existing BE data had route. Now just 'BE' or empty?
+                            // NL has 'route' set to depotName.
+                            // Let's set route to 'BE-Route' or just leave it generic.
+                            // The original NL logic sets route: depotName. 
+                            // BE original had route in col 0. Now col 0 is ID.
+                            // Let's set route to 'BE-Route' or just leave it generic.
+                            route: 'BE', 
+                            id: idVal,
+                            naam: nameVal,
+                            max: maxVal,
+                            // Empty schedule fields to prevent crashes if accessed
+                            MA:'', DI:'', WO:'', DO:'', VR:'', ZA:'', ZO:'' 
+                        };
+                    } else {
+                        let idVal = clean(cols[0]);
+                        if (idVal) { idVal = idVal.padStart(3, '0'); }
+
+                        let nameVal = clean(cols[1]);
+                        let maxVal = 500; 
+                        if (cols[2]) {
+                            const parsed = parseInt(clean(cols[2]));
+                            if (!isNaN(parsed) && parsed > 0) maxVal = parsed;
+                        }
+                        
+                        const depotName = importMode === 'NL_TLB' ? 'TLB' : 'BKR';
+                        
+                        store = {
+                            country: 'NL',
+                            depot: depotName, 
+                            id: idVal,
+                            route: depotName,
+                            naam: nameVal,
+                            max: maxVal,
+                            MA:'', DI:'', WO:'', DO:'', VR:'', ZA:'', ZO:'' 
+                        };
+                    }
+
+                    if (store.id && !isNaN(parseInt(store.id))) {
+                        newDB.push(store);
+                        successCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    setDatabase(newDB); 
+                    setShowImport(false); 
+                    setPasteData("");
+                    // Switch active country to NL if importing NL data
+                    if(importMode.startsWith('NL')) setActiveCountry('NL');
+                    showAlert(`Succes! ${successCount} filialen voor ${importMode} geïmporteerd.`, "Import Voltooid");
+                } else { showAlert("Geen geldige regels gevonden.", "Fout"); }
+            };
+
+            const handleManualAddSubmit = (e) => {
+                e.preventDefault();
+                if (!manualInput) return;
+
+                // Split input on newlines, commas, or spaces to handle multiple entries
+                const rawInputs = manualInput.split(/[\n\r\t, ]+/).filter(s => s.trim().length > 0);
+                
+                if (rawInputs.length === 0) return;
+
+                let successCount = 0;
+                let errorLog = [];
+                
+                rawInputs.forEach(rawToken => {
+                    let token = rawToken.trim();
+                     // Remove scanner prefix ]C0 if present
+                    if (token.startsWith("]C0")) {
+                        token = token.substring(3);
+                    }
+                    
+                    let targetId = null;
+                    let isBarcode = false;
+
+                    // 1. Probeer als 210 barcode
+                    if (token.startsWith("210") && token.length >= 6) {
+                        const extracted = token.substring(3, 6);
+                        if (!isNaN(parseInt(extracted))) {
+                            targetId = extracted;
+                            isBarcode = true;
+                        }
+                    } 
+                    // 2. Probeer als direct filiaal ID
+                    else if (!isNaN(parseInt(token)) && token.length <= 4) {
+                        targetId = token;
+                        isBarcode = false;
+                    }
+
+                    if (!targetId) {
+                        errorLog.push(`${token}: Ongeldig formaat`);
+                        return;
+                    }
+
+                    const formattedId = targetId.padStart(3, '0');
+
+                    // Zoek filiaal strict
+                    let store = database.find(s => s.id === formattedId && s.country === activeCountry);
+
+                    if (!store) {
+                         const otherStore = database.find(s => s.id === formattedId);
+                         if(otherStore) {
+                             errorLog.push(`${token}: Verkeerd land (is ${otherStore.country})`);
+                         } else {
+                             errorLog.push(`${token}: Onbekend filiaal`);
+                         }
+                         return;
+                    }
+
+                    // Check Depot
+                    if (activeCountry === 'NL') {
+                        if (store.depot && store.depot !== activeDepot) {
+                            errorLog.push(`${token}: Verkeerd depot (${store.depot})`);
+                            return;
+                        }
+                    }
+
+                    // Check Duplicaat
+                    if (isBarcode) {
+                        const isDuplicate = scanHistory.some(log => log.barcode === token);
+                        if(isDuplicate) {
+                            errorLog.push(`${token}: Al gescand`);
+                            return;
+                        }
+                    } else {
+                        // Unique ID for manual entry
+                         token = `HANDMATIG-${formattedId}-${Date.now()}-${Math.random()}`; // Add random to ensure uniqueness in loop
+                    }
+
+                    // Logic OK, calculate info
+                    // Note: currentCount is approximated here because state updates are batched, 
+                    // so duplicate store entries in ONE paste action might not catch "Full" status correctly for the 2nd item.
+                    // But for "Restant" this is informative only.
+                    const currentCount = scanHistory.filter(item => item.storeId === store.id && item.country === store.country && isCountableForCapacity(item.status)).length;
+                    const batchIndex = Math.floor(currentCount / store.max);
+                    const deliveryInfo = getDeliveryDateByBatch(store, batchIndex);
+                    
+                    addToHistory(store, STATUS_HANDMATIG, token, deliveryInfo, 'REST');
+                    successCount++;
+                });
+
+                setManualInput('');
+                setShowManualModal(false);
+
+                if (successCount > 0) {
+                    playSound('success');
+                    let msg = `${successCount} restanten toegevoegd.`;
+                    if (errorLog.length > 0) {
+                        msg += `\n\n⚠️ ${errorLog.length} geweigerd:\n` + errorLog.slice(0, 5).join('\n') + (errorLog.length > 5 ? '\n...' : '');
+                    }
+                    showAlert(msg, "Restanten Verwerkt");
+                } else if (errorLog.length > 0) {
+                    playSound('error');
+                    showAlert(`Geen items toegevoegd.\nFouten:\n${errorLog.slice(0,10).join('\n')}`, "Fout");
+                }
+            };
+
+            const handleScan = (e) => {
+                e.preventDefault();
+                if (!scanInput) return;
+
+                let rawInput = scanInput.trim();
+
+                // Remove scanner prefix ]C0 if present
+                if (rawInput.startsWith("]C0")) {
+                    rawInput = rawInput.substring(3);
+                }
+
+                // --- 1. CHECK FOR 010 (Verification) ---
+// NU ACTIEF IN VOORSCAN MODUS
+if (doubleCheckMode && !exceptionMode && scanMode === 'VOORSCAN' && rawInput.startsWith("010") && rawInput.length >= 6) {
+    const extracted010 = rawInput.substring(3, 6);
+                    let store010 = database.find(s => s.id === extracted010 && s.country === activeCountry);
+                    
+                    setVerificationId(extracted010);
+                    setScanResult({ 
+                        type: 'info', 
+                        store: store010 || { id: extracted010, naam: 'Onbekend', route: '?' }, 
+                        msg: 'RC VERIFICATIE OK', 
+                        bufferMsg: `Koppel nu pakket voor ${extracted010}`,
+                        quantityMsg: 'Scan nu 210 barcode' 
+                    });
+                    playSound('info');
+                    setScanInput('');
+                    return;
+                }
+
+                if (scanMode === 'LADEN' && trailerStats.count >= trailerLimit) {
+                    setShowTrailerModal(true);
+                    setScanInput('');
+                    return;
+                }
+
+                // --- 2. CHECK FOR 210 (Package) ---
+                let targetId = null;
+                if (rawInput.startsWith("210") && rawInput.length >= 6 && rawInput.length <= 13) {
+                    const extracted = rawInput.substring(3, 6);
+                    if (!isNaN(parseInt(extracted))) targetId = extracted;
+                } else {
+                    setScanResult({ type: 'unknown', store: { id: '---', naam: 'Ongeldig' }, msg: 'Barcode moet starten met 210' });
+                    playSound('error');
+                    setScanInput('');
+                    return;
+                }
+
+                const scannedBarcode = rawInput;
+                const existingScan = scanHistory.find(log => log.barcode === scannedBarcode);
+                
+                // Check if item is already in BUFFER
+                const isBufferItem = existingScan && existingScan.status === STATUS_BUFFER;
+
+                // Als we in LADEN modus zijn, is een 'STATUS_ONDERWEG' of 'STATUS_BUFFER' scan geen duplicaat, maar een update.
+                const isDuplicate = existingScan && !(scanMode === 'LADEN' && (existingScan.status === STATUS_ONDERWEG || existingScan.status === STATUS_BUFFER)) && !(scanMode === 'VOORSCAN' && isBufferItem);
+
+                if (isDuplicate) {
+                    const tempId = targetId.padStart(3, '0');
+                    const tempStore = database.find(s => s.id === tempId && s.country === activeCountry) || { id: tempId, naam: 'Onbekend' };
+                    setScanResult({ type: 'warning-duplicate', store: tempStore, msg: 'DUPLICAAT SCAN', bufferMsg: 'Reeds gescand!', quantityMsg: 'Niet opgeslagen' });
+                    playSound('error');
+                    setScanInput('');
+                    return;
+                }
+
+                const formattedId = targetId.padStart(3, '0');
+                let store = database.find(s => s.id === formattedId && s.country === activeCountry);
+                
+                if (!store) {
+                    // NEW: UNKNOWN 210 LOGIC (VOORSCAN ONLY)
+                    if (scanMode === 'VOORSCAN' && rawInput.startsWith('210')) {
+                         // Create phantom store
+                         const phantomStore = {
+                             id: formattedId,
+                             naam: 'Onbekend (Buffer)',
+                             country: activeCountry,
+                             depot: activeCountry === 'NL' ? activeDepot : 'BE',
+                             route: 'BUFFER',
+                             max: 9999
+                         };
+
+                         // Save to buffer
+                         const deliveryInfo = { dayName: 'BUFFER', dateString: 'ONBEKEND' };
+                         addToHistory(phantomStore, STATUS_BUFFER, rawInput, deliveryInfo, 'BUF');
+                         
+                         setScanResult({
+                             type: 'warning-max', 
+                             store: phantomStore,
+                             barcode: rawInput,
+                             deliveryInfo,
+                             msg: 'ONBEKEND -> NAAR BUFFER',
+                             bufferMsg: 'Barcode niet in DB, wel 210',
+                             quantityMsg: 'Opgeslagen in Buffer',
+                             isCheckMode: true 
+                         });
+                         playSound('alert'); 
+                         setScanInput('');
+                         return;
+                    }
+                    
+                    setScanResult({ type: 'unknown', store: { id: formattedId, naam: `Onbekend in ${activeCountry}` }, msg: 'Filiaal niet gevonden' });
+                    playSound('error');
+                    setScanInput('');
+                    return;
+                }
+
+                // Check Depot Match for NL
+                if (activeCountry === 'NL') {
+                    if (store.depot && store.depot !== activeDepot) {
+                        setScanResult({ type: 'warning-duplicate', store, msg: `VERKEERD DEPOT (${store.depot})`, bufferMsg: `Huidige trailer is ${activeDepot}`, quantityMsg: 'Niet opgeslagen' });
+                        playSound('error');
+                        setScanInput('');
+                        return;
+                    }
+                }
+
+                // --- 3. DOUBLE CHECK LOGIC (V70 Updated) ---
+                if (doubleCheckMode && !exceptionMode && scanMode === 'VOORSCAN') {
+                    // Normal Strict Mode
+                    if (!verificationId) {
+                        setScanResult({ type: 'unknown', store, msg: 'VERIFICATIE NODIG', bufferMsg: 'Scan eerst de 010 (DOOS)!', quantityMsg: 'Niet opgeslagen' });
+                        playSound('error');
+                        setScanInput('');
+                        return;
+                    }
+                    
+                    if (verificationId !== formattedId) {
+                        setScanResult({ 
+                            type: 'warning-max', 
+                            store, 
+                            msg: 'MISMATCH - FOUT!', 
+                            bufferMsg: `RC: ${verificationId} != LABEL: ${formattedId}`, 
+                            quantityMsg: 'HERSTEL: Scan juiste DOOS (010) of LABEL (210)' 
+                        });
+                        playSound('error');
+                        setScanInput('');
+                        return;
+                    }
+                }
+
+                // Tel ALLES mee voor capaciteit: VERZONDEN + HANDMATIG + ONDERWEG
+                // Ook in 'VOORSCAN' modus willen we weten of er plek is.
+                const currentCount = scanHistory.filter(item => item.storeId === store.id && item.country === store.country && isCountableForCapacity(item.status)).length;
+                const batchIndex = Math.floor(currentCount / store.max);
+                const deliveryInfo = getDeliveryDateByBatch(store, batchIndex);
+                
+                let isNextLogisticalDelivery = true;
+                if (store.country === 'BE') {
+                    const nextLogisticalDay = getNextLogisticalDay('BE');
+                    isNextLogisticalDelivery = deliveryInfo.dateObj.getDate() === nextLogisticalDay.getDate() && 
+                                               deliveryInfo.dateObj.getMonth() === nextLogisticalDay.getMonth();
+                }
+
+                // FIX: Check if we are updating an existing "ONDERWEG" item to "GELADEN"
+                // If so, do NOT increment the count for display/check, as it was already counted.
+                const isStatusUpdate = existingScan && (existingScan.status === STATUS_ONDERWEG || existingScan.status === STATUS_BUFFER);
+
+                let newTotal = currentCount;
+                if (!isStatusUpdate) {
+                     newTotal = currentCount + 1; 
+                }
+                
+                const isSingle = newTotal === 1;
+
+                let statusType = 'success';
+                let statusMsg = 'OK - OPGESLAGEN';
+                let bufferMsg = '';
+                let quantityMsg = '';
+                let shouldSave = true;
+                let trailerMsg = '';
+                let isBufferRedirect = false;
+                
+                const increment = 1;
+                let nextTrailerCount = trailerStats.count + increment;
+                
+                let isTrailerFullNow = false;
+
+                if (scanMode === 'LADEN' && nextTrailerCount > trailerLimit) {
+                    isTrailerFullNow = true;
+                    trailerMsg = `TRAILER ${trailerStats.number} IS VOL!`;
+                    // Only trigger modal delay if we are actually saving
+                    if (!checkMode) {
+                         playSound('alert');
+                         setTimeout(() => setShowTrailerModal(true), 500);
+                    }
+                }
+
+                if (isSingle) quantityMsg = 'LET OP: 1e Scan. Nog 1 nodig!';
+                else quantityMsg = `AANTAL OK: ${newTotal} (Meer dan 1)`;
+
+                // Als het een bestaande ONDERWEG scan is die we nu laden, is de capaciteitscheck al gedaan.
+                if (!existingScan || isBufferItem) {
+                     if (batchIndex > 0) {
+                        statusType = 'warning-max'; statusMsg = 'MAX BEREIKT -> BUFFER';
+                        bufferMsg = `Zet in BUFFER. Levering: ${deliveryInfo.dayName}`; 
+                        shouldSave = false;
+                        isBufferRedirect = true;
+                        playSound('error');
+                    } else if (!isNextLogisticalDelivery) {
+                        statusType = 'warning-delivery'; statusMsg = 'VERKEERDE DAG -> BUFFER';
+                        bufferMsg = `Zet in BUFFER. Levering pas: ${deliveryInfo.dayName}`; 
+                        shouldSave = false;
+                        isBufferRedirect = true;
+                        playSound('error');
+                    }
+                }
+                
+                const pct = Math.min((newTotal / store.max) * 100, 100);
+                const isMax = newTotal >= store.max;
+
+                // --- MODUS LOGICA ---
+
+                if (scanMode === 'VOORSCAN') {
+                    // Als voorscan: check is al gedaan hierboven (shouldSave).
+                    // Als ROOD -> Buffer (isBufferRedirect)
+                    
+                    if (isBufferRedirect) {
+                        // AUTOMATIC BUFFER SAVE
+                        if (!isBufferItem) { // Don't duplicate if already in buffer
+                             addToHistory(store, STATUS_BUFFER, scannedBarcode, deliveryInfo, 'BUF'); 
+                        }
+                        // Feedback stays 'warning' to alert user
+                    }
+                    else if (shouldSave) {
+                        statusMsg = 'VOORSCAN OK: NAAR DOCK';
+                        // Save as ONDERWEG
+                        // If it was in BUFFER, update it. If new, add it.
+                         if (isBufferItem) {
+                             setScanHistory(prev => prev.map(item => {
+                                if (item.barcode === scannedBarcode) {
+                                    return { ...item, status: STATUS_ONDERWEG, timestamp: new Date().toLocaleTimeString() };
+                                }
+                                return item;
+                            }));
+                         } else {
+                             addToHistory(store, STATUS_ONDERWEG, scannedBarcode, deliveryInfo, trailerStats.number); // Trailer nr is voorlopig
+                         }
+                        playSound('success');
+                    }
+                    
+                    setScanResult({ type: statusType, store, barcode: scannedBarcode, deliveryInfo, msg: statusMsg, bufferMsg, quantityMsg, isSingle, newTotal, trailerMsg, pct, isMax, isCheckMode: true });
+                } 
+                else {
+                    // MODUS: LADEN (Dock)
+                    if (existingScan && (existingScan.status === STATUS_ONDERWEG || existingScan.status === STATUS_BUFFER)) {
+                        // SCENARIO A: UPDATE
+                        // Als het uit buffer komt, check alsnog capaciteit (misschien is winkel inmiddels vol?)
+                        // Maar we gaan ervan uit dat de user het nu wil laden.
+                        
+                       // UPDATE naar STATUS_GELADEN
+                         setScanHistory(prev => prev.map(item => {
+                            if (item.barcode === scannedBarcode) {
+                                // FIX: Update ook het trailer nummer naar de HUIDIGE actieve trailer!
+                                return { 
+                                    ...item, 
+                                    status: STATUS_GELADEN, 
+                                    timestamp: new Date().toLocaleTimeString(),
+                                    trailerNr: trailerStats.number // <--- DEZE REGEL LOST HET OP
+                                };
+                            }
+                            return item;
+                        }));
+                        
+                        // Trailer count update
+                        const trailerKey = getCurrentTrailerKey();
+                        if (!isTrailerFullNow) {
+                             setTrailerState(prev => ({ ...prev, [trailerKey]: { ...prev[trailerKey], count: nextTrailerCount } }));
+                        } else {
+                             setTrailerState(prev => ({ ...prev, [trailerKey]: { ...prev[trailerKey], count: trailerLimit } }));
+                        }
+                        
+                        statusMsg = existingScan.status === STATUS_BUFFER ? 'GELADEN (UIT BUFFER)' : 'GELADEN (WAS ONDERWEG)';
+                        setVerificationId(null);
+                        playSound('success');
+                        
+                        setScanResult({ type: 'success', store, barcode: scannedBarcode, deliveryInfo, msg: statusMsg, bufferMsg, quantityMsg, isSingle, newTotal, trailerMsg, pct, isMax });
+
+                    } else if (shouldSave) {
+                        // SCENARIO B: NIEUWE SCAN aan dock (niet voorgescan)
+                        const trailerKey = getCurrentTrailerKey();
+                        if (!isTrailerFullNow) {
+                            setTrailerState(prev => ({
+                                ...prev,
+                                [trailerKey]: { ...prev[trailerKey], count: nextTrailerCount }
+                            }));
+                        } else {
+                            setTrailerState(prev => ({
+                                ...prev,
+                                [trailerKey]: { ...prev[trailerKey], count: trailerLimit }
+                            }));
+                        }
+                        addToHistory(store, STATUS_GELADEN, scannedBarcode, deliveryInfo, trailerStats.number);
+                        setVerificationId(null);
+                        playSound('success');
+                        
+                        setScanResult({ type: statusType, store, barcode: scannedBarcode, deliveryInfo, msg: statusMsg, bufferMsg, quantityMsg, isSingle, newTotal, trailerMsg, pct, isMax });
+                    } else if (isBufferRedirect) {
+                         // Automatic buffer save at dock if rejected? Usually dock rejects = reject. 
+                         // But user requirement 1 implies "voorscan", let's keep consistency.
+                         // If rejected at dock, maybe we shouldn't buffer automatically to keep dock clean, 
+                         // but logic says "Als ROOD scherm... sla op met STATUS_BUFFER".
+                         if (!existingScan) {
+                             addToHistory(store, STATUS_BUFFER, scannedBarcode, deliveryInfo, 'BUF'); 
+                         }
+                         setScanResult({ type: statusType, store, barcode: scannedBarcode, deliveryInfo, msg: statusMsg, bufferMsg, quantityMsg, isSingle, newTotal, trailerMsg, pct, isMax });
+                    } else {
+                         // Fout in laden modus
+                         setScanResult({ type: statusType, store, barcode: scannedBarcode, deliveryInfo, msg: statusMsg, bufferMsg, quantityMsg, isSingle, newTotal, trailerMsg, pct, isMax });
+                    }
+                }
+                
+                setScanInput('');
+            };
+
+            // --- STATE UPDATERS ---
+          const addToHistory = (store, status, barcode, deliveryInfo, trailerNr) => {
+                const safeTrailerNr = (trailerNr !== undefined && trailerNr !== null) ? trailerNr : 1;
+
+                const newLog = {
+                    id: Date.now(),
+                    timestamp: new Date().toLocaleTimeString(),
+                    storeId: store.id,
+                    storeName: store.naam,
+                    route: store.route || '?',
+                    barcode: barcode || '-',
+                    status: status,
+                    deliveryDate: `${deliveryInfo.dayName} ${deliveryInfo.dateString}`,
+                    trailerNr: safeTrailerNr,
+                    country: store.country,
+                    depot: store.depot || (store.country === 'NL' ? activeDepot : '')
+                };
+
+                db.ref('scanHistory/' + newLog.id).set(newLog);
+
+                if (isCountableForCapacity(status)) {
+                    const key = (store.country === 'BE') ? 'BE' : `NL_${newLog.depot}`;
+                    const currentStats = trailerState[key] || { number: 1, count: 0 };
+
+                    db.ref(`trailerState/${key}`).set({
+                        number: currentStats.number || 1,
+                        count: currentStats.count + 1
+                    });
+                }
+            };
+
+           const deleteLog = (id) => {
+                // Zoek item EERST op (anders kunnen we het niet meer vinden na verwijderen)
+                const itemToDelete = scanHistory.find(i => i.id === id);
+                if (!itemToDelete) return;
+
+                showConfirm("Weet u zeker dat u deze scan wilt verwijderen uit de Cloud database?", () => {
+                    
+                    // 1. Verwijder uit Firebase (De luisteraar haalt hem daarna van je scherm)
+                    db.ref('scanHistory/' + id).remove();
+
+                    // 2. Update de trailer teller (-1) in Firebase als het item meetelde
+                    // We gebruiken hier weer 'isCountableForCapacity' om te checken of hij meetelde
+                    if (isCountableForCapacity(itemToDelete.status)) {
+                        const key = (itemToDelete.country === 'BE') ? 'BE' : `NL_${itemToDelete.depot}`;
+                        
+                        // We lezen de huidige state uit de variabele trailerState (die is up-to-date)
+                        const currentStats = trailerState[key] || { number: 1, count: 0 };
+                        const newCount = Math.max(0, currentStats.count - 1);
+                        
+                        // Update teller in Cloud
+                        db.ref(`trailerState/${key}`).update({
+                            count: newCount
+                        });
+                    }
+                    
+                    // Reset UI feedback als dit item net gescand was
+                    if(scanResult && scanResult.barcode === itemToDelete.barcode) {
+                        setScanResult(null);
+                    }
+                }, "Scan Verwijderen", "Verwijderen");
+            };
+
+            // --- VIEW HELPERS ---
+         const getDailyStats = () => {
+                const stats = {};
+
+                database.forEach(store => {
+                    if (store.country !== activeCountry) return;
+                    if (activeCountry === 'NL') {
+                        if (store.depot && store.depot !== activeDepot) return;
+                    }
+
+                    stats[store.id] = { 
+                        store, 
+                        total: 0, 
+                        onderweg: 0, 
+                        buffer: 0, 
+                        barcodes: [] 
+                    };
+                });
+
+                scanHistory.forEach(log => {
+                    if (log.country !== activeCountry) return;
+                    if (activeCountry === 'NL' && log.depot !== activeDepot) return;
+
+                    if (!stats[log.storeId]) {
+                        if (isVisibleStatus(log.status) || log.status === STATUS_ONDERWEG || log.status === STATUS_BUFFER) {
+                            stats[log.storeId] = {
+                                store: {
+                                    id: log.storeId,
+                                    naam: log.storeName || 'Onbekend / Geen Data',
+                                    route: log.route || '?',
+                                    country: log.country,
+                                    max: 0
+                                },
+                                total: 0,
+                                onderweg: 0,
+                                buffer: 0,
+                                barcodes: []
+                            };
+                        }
+                    }
+
+                    if (stats[log.storeId]) {
+                        if (isVisibleStatus(log.status)) {
+                            stats[log.storeId].total += 1;
+                        }
+                        
+                        if (log.status === STATUS_ONDERWEG) {
+                            stats[log.storeId].onderweg += 1;
+                        }
+
+                        if (log.status === STATUS_BUFFER) {
+                            stats[log.storeId].buffer += 1;
+                        }
+
+                        if(log.barcode && log.barcode !== '-') {
+                            stats[log.storeId].barcodes.push({code: log.barcode, status: log.status});
+                        }
+                    }
+                });
+
+                return Object.values(stats).sort((a, b) => {
+                    const idA = parseInt(a.store.id);
+                    const idB = parseInt(b.store.id);
+                    if (!isNaN(idA) && !isNaN(idB)) return idA - idB;
+                    return a.store.id.localeCompare(b.store.id);
+                });
+            };
+            const getFullStores = () => {
+                const counts = {};
+                scanHistory.forEach(log => {
+                    if (log.country !== activeCountry) return;
+                    if (activeCountry === 'NL' && log.depot !== activeDepot) return;
+
+                    // Alleen zichtbare items tellen voor de "Volle Winkels" lijst weergave
+                    if(isVisibleStatus(log.status)) {
+                        counts[log.storeId] = (counts[log.storeId] || 0) + 1; 
+                    }
+                });
+                const fullStoreIds = Object.keys(counts).filter(id => {
+                    const store = database.find(s => s.id === id && s.country === activeCountry);
+                    return store && counts[id] >= store.max;
+                });
+                return fullStoreIds.map(id => {
+                    const store = database.find(s => s.id === id && s.country === activeCountry);
+                    return { id, naam: store.naam, count: counts[id], max: store.max };
+                }).sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            };
+
+            const getIncompleteStores = () => {
+                const counts = {};
+                scanHistory.forEach(log => { 
+                    if (log.country !== activeCountry) return;
+                    if (activeCountry === 'NL' && log.depot !== activeDepot) return;
+
+                    if(isVisibleStatus(log.status)) {
+                        counts[log.storeId] = (counts[log.storeId] || 0) + 1; 
+                    }
+                });
+                const incompleteIds = Object.keys(counts).filter(id => counts[id] === 1);
+                return incompleteIds.map(id => {
+                    const store = database.find(s => s.id === id && s.country === activeCountry);
+                    if (!store) return null;
+                    return { id, naam: store.naam, count: counts[id] };
+                }).filter(s => s !== null).sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            };
+
+            const incompleteStores = getIncompleteStores();
+            const fullStores = getFullStores();
+            const uniqueTrailers = getUniqueTrailers();
+
+            // Theme colors based on country
+            const themeClass = activeCountry === 'NL' ? 'bg-nl-orange text-white' : 'bg-be-green text-white';
+            const themeText = activeCountry === 'NL' ? 'text-nl-orange' : 'text-be-green';
+            const themeBorder = activeCountry === 'NL' ? 'border-nl-orange' : 'border-be-green';
+
+// OPTIMIZATION: Limit table rows to improve render performance on large datasets
+            const filteredScanHistory = scanHistory.filter(item => {
+                if (item.country !== activeCountry) return false;
+                if (activeCountry === 'NL' && item.depot !== activeDepot) return false;
+                
+                // Hide 'ONDERWEG' from history list
+                if (!isVisibleStatus(item.status)) return false;
+                
+                // --- 1. SEARCH FILTER (VEILIG GEMAAKT) ---
+                if (historySearchQuery) {
+                    const query = historySearchQuery.toLowerCase();
+                    // Gebruik String() in plaats van .toString() om crashes te voorkomen
+                    const matchesId = String(item.storeId || '').toLowerCase().includes(query);
+                    const matchesName = String(item.storeName || '').toLowerCase().includes(query);
+                    const matchesBarcode = String(item.barcode || '').toLowerCase().includes(query);
+                    
+                    if (!matchesId && !matchesName && !matchesBarcode) return false;
+                }
+                
+                // --- 2. TRAILER FILTER ---
+                if (historyTrailerFilter !== 'all') {
+                    return String(item.trailerNr) === String(historyTrailerFilter);
+                }
+                return true;
+            });
+            
+            // Buffer Data for Modal
+            const bufferStats = getBufferStats();
+            
+            // Slice the display to prevent DOM overload crashes with 1000+ items
+            const displayedHistory = filteredScanHistory.slice(0, 100);
+
+            return (
+                <div className="min-h-screen bg-gray-100 p-4 font-sans text-slate-800">
+                    
+                    {/* GLOBAL MODALS */}
+                    
+                    {uiMessage.open && (
+                        <Modal title={uiMessage.title} onClose={() => setUiMessage({ ...uiMessage, open: false })}>
+                            <p className="whitespace-pre-line">{uiMessage.message}</p>
+                            <div className="flex justify-end mt-4">
+                                <button onClick={() => setUiMessage({ ...uiMessage, open: false })} className={`px-4 py-2 rounded font-bold ${themeClass}`}>OK</button>
+                            </div>
+                        </Modal>
+                    )}
+
+                    {uiConfirm.open && (
+                        <Modal title={uiConfirm.title} onClose={uiConfirm.onCancel}>
+                            <p className="mb-4">{uiConfirm.message}</p>
+                            <div className="flex justify-end gap-2">
+                                <button onClick={uiConfirm.onCancel} className="px-4 py-2 border rounded hover:bg-gray-50">{uiConfirm.cancelLabel}</button>
+                                <button onClick={uiConfirm.onConfirm} className={`px-4 py-2 rounded font-bold ${themeClass}`}>{uiConfirm.confirmLabel}</button>
+                            </div>
+                        </Modal>
+                    )}
+                  
+                    {/* IMPORT DECISION MODAL (TOEVOEGEN / VERVANGEN) */}
+                    {importDecision.open && (
+                        <Modal title="Import Keuze" onClose={() => setImportDecision({ ...importDecision, open: false })}>
+                            <div className="text-center">
+                                <div className="text-orange-500 mb-4 mx-auto flex justify-center">{Icons.Alert}</div>
+                                <h3 className="font-bold text-lg mb-2">Er is al data aanwezig voor {importDecision.targetCountry}</h3>
+                                <p className="text-gray-600 mb-6">Je staat op het punt om <b>{importDecision.barcodes.length}</b> nieuwe regels te importeren. Wat wil je doen?</p>
+                                
+                                <div className="flex flex-col gap-3">
+                                    <button 
+                                        onClick={() => executeImport(importDecision.barcodes, false, importDecision.targetCountry)}
+                                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow hover:bg-blue-700 flex justify-center gap-2"
+                                    >
+                                        {Icons.Plus} Toevoegen aan bestaande lijst
+                                    </button>
+                                    
+                                    <div className="text-xs text-gray-400 text-center">- OF -</div>
+
+                                    <button 
+                                        onClick={() => executeImport(importDecision.barcodes, true, importDecision.targetCountry)}
+                                        className="w-full bg-white text-red-600 border-2 border-red-100 py-3 rounded-lg font-bold hover:bg-red-50 hover:border-red-200 flex justify-center gap-2"
+                                    >
+                                        {Icons.Trash} Alles wissen & Vervangen
+                                    </button>
+                                </div>
+                                <button onClick={() => setImportDecision({ ...importDecision, open: false })} className="mt-4 text-gray-400 text-sm underline hover:text-gray-600">Annuleren</button>
+                            </div>
+                        </Modal>
+                    )}
+                    {/* BUFFER MANAGEMENT MODAL - UPDATED UI */}
+                    {showBufferModal && (
+                        <Modal title="Buffer Beheer" onClose={() => setShowBufferModal(false)} wide>
+                           <div className="grid grid-cols-3 gap-4 mb-6">
+                             {/* ... (Laat de tellers (BE, TLB, BKR) hier staan zoals ze waren) ... */}
+                             <div className="bg-blue-50 p-4 rounded-lg text-center border border-blue-200">
+                                <div className="text-sm text-gray-500 font-bold">BE</div>
+                                <div className="text-3xl font-black text-blue-600">{bufferStats.counts.BE}</div>
+                            </div>
+                            <div className="bg-orange-50 p-4 rounded-lg text-center border border-orange-200">
+                                <div className="text-sm text-gray-500 font-bold">NL - TLB</div>
+                                <div className="text-3xl font-black text-orange-600">{bufferStats.counts.TLB}</div>
+                            </div>
+                            <div className="bg-orange-50 p-4 rounded-lg text-center border border-orange-200">
+                                <div className="text-sm text-gray-500 font-bold">NL - BKR</div>
+                                <div className="text-3xl font-black text-orange-600">{bufferStats.counts.BKR}</div>
+                            </div>
+                        </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            {/* BE List */}
+                            <div className="border rounded bg-gray-50 p-2 h-64 overflow-y-auto custom-scroll">
+                                <h4 className="font-bold text-center text-blue-800 border-b pb-2 mb-2 sticky top-0 bg-gray-50">BE Items</h4>
+                                {bufferStats.lists.BE.map(item => (
+                                    <div key={item.id} className="text-xs border-b border-gray-200 py-1 flex justify-between items-center hover:bg-red-50 transition group">
+                                        <span className="font-mono text-gray-700">{item.barcode}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400">{item.timestamp.slice(0,5)}</span>
+                                            <button 
+                                                onClick={() => removeFromBuffer(item.id)} 
+                                                className="text-gray-300 hover:text-red-600 hover:bg-red-100 p-1 rounded transition"
+                                                title="Verwijder"
+                                            >
+                                                {Icons.Trash}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {bufferStats.lists.BE.length === 0 && <div className="text-center text-gray-400 italic text-xs mt-4">Leeg</div>}
+                            </div>
+                            
+                            {/* TLB List */}
+                            <div className="border rounded bg-gray-50 p-2 h-64 overflow-y-auto custom-scroll">
+                                <h4 className="font-bold text-center text-orange-800 border-b pb-2 mb-2 sticky top-0 bg-gray-50">TLB Items</h4>
+                                {bufferStats.lists.TLB.map(item => (
+                                    <div key={item.id} className="text-xs border-b border-gray-200 py-1 flex justify-between items-center hover:bg-red-50 transition group">
+                                        <span className="font-mono text-gray-700">{item.barcode}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400">{item.timestamp.slice(0,5)}</span>
+                                            <button 
+                                                onClick={() => removeFromBuffer(item.id)} 
+                                                className="text-gray-300 hover:text-red-600 hover:bg-red-100 p-1 rounded transition"
+                                                title="Verwijder"
+                                            >
+                                                {Icons.Trash}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {bufferStats.lists.TLB.length === 0 && <div className="text-center text-gray-400 italic text-xs mt-4">Leeg</div>}
+                            </div>
+
+                            {/* BKR List */}
+                            <div className="border rounded bg-gray-50 p-2 h-64 overflow-y-auto custom-scroll">
+                                <h4 className="font-bold text-center text-orange-800 border-b pb-2 mb-2 sticky top-0 bg-gray-50">BKR Items</h4>
+                                {bufferStats.lists.BKR.map(item => (
+                                    <div key={item.id} className="text-xs border-b border-gray-200 py-1 flex justify-between items-center hover:bg-red-50 transition group">
+                                        <span className="font-mono text-gray-700">{item.barcode}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400">{item.timestamp.slice(0,5)}</span>
+                                            <button 
+                                                onClick={() => removeFromBuffer(item.id)} 
+                                                className="text-gray-300 hover:text-red-600 hover:bg-red-100 p-1 rounded transition"
+                                                title="Verwijder"
+                                            >
+                                                {Icons.Trash}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {bufferStats.lists.BKR.length === 0 && <div className="text-center text-gray-400 italic text-xs mt-4">Leeg</div>}
+                            </div>
+                        </div>
+
+                        {/* --- DIT IS HET NIEUWE ONDERSTE GEDEELTE (VERVANGT OUDE IMPORT/EXPORT) --- */}
+                        <div className="flex gap-4 border-t pt-4">
+                            {/* Links: Export blok */}
+                            <div className="w-1/3 p-4 bg-gray-50 rounded border border-gray-200 flex flex-col justify-between">
+                                <div>
+                                    <h3 className="font-bold text-sm mb-1">Buffer Exporteren</h3>
+                                    <div className="text-xs text-gray-500 mb-3">Download lijst als .txt</div>
+                                </div>
+                                <button onClick={exportBuffer} className="w-full bg-gray-600 text-white py-2 rounded text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-700">
+                                    {Icons.Download} Download .txt
+                                </button>
+                            </div>
+                            
+                            {/* Rechts: Het nieuwe Import blok (Textarea + Upload) */}
+                            <div className="w-2/3 p-4 bg-blue-50 rounded border border-blue-200 flex flex-col">
+                                <h3 className="font-bold text-sm mb-2 text-blue-900">Buffer Importeren (Plakken & Scannen)</h3>
+                                
+                                <textarea
+                                    className="flex-1 border border-blue-200 p-2 text-xs font-mono rounded mb-2 focus:ring-2 ring-blue-500 outline-none resize-none h-20"
+                                    placeholder="Formaat per regel: Barcode;Depot&#10;Voorbeeld: 210001234567;TLB"
+                                    value={bufferImportText}
+                                    onChange={(e) => setBufferImportText(e.target.value)}
+                                />
+                                
+                                <div className="flex gap-2">
+                                    {/* Upload knop (klein) */}
+                                    <label className="flex items-center gap-1 bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded text-xs font-bold cursor-pointer hover:bg-gray-50 transition" title="Kies .txt bestand">
+                                        {Icons.Upload}
+                                        <input 
+                                            type="file" 
+                                            accept=".txt" 
+                                            onChange={handleBufferFileUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+
+                                    {/* Grote actieknop */}
+                                    <button 
+                                        onClick={() => processBufferImport()} 
+                                        className="flex-1 bg-blue-600 text-white py-2 rounded text-xs font-bold hover:bg-blue-700 shadow-sm transition flex justify-center items-center gap-2"
+                                    >
+                                        {Icons.Plus} Verwerken & Toevoegen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {/* --- EINDE NIEUWE LAYOUT --- */}
+
+    </Modal>
+)}
+
+                    
+{/* ADMIN PASTE 210 MODAL (NO TXT UPLOAD) */}
+{showBarcodePasteModal && isAdmin && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print">
+        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl flex flex-col h-[80vh]">
+            <div className="flex justify-between items-center mb-3 border-b pb-2">
+                <h2 className={`text-xl font-bold flex items-center gap-2 ${themeText}`}>{Icons.Clipboard} 210 barcodes plakken</h2>
+                <button onClick={() => setShowBarcodePasteModal(false)} className="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800 mb-4">
+                Plak hier de 210 barcodes (uit Excel, mail, SAP, etc.). Scheidingstekens maken niet uit. De app verwerkt direct alle gevonden 210 barcodes voor de actieve selectie: <b>{activeCountry}{activeCountry === 'NL' ? ` - ${activeDepot}` : ''}</b>.
+                <div className="mt-2 text-xs text-blue-700">Limiet: maximaal 2000 barcodes per importactie.</div>
+            </div>
+
+            <textarea
+                className="flex-1 border p-4 font-mono text-xs rounded mb-4 focus:ring-2 ring-orange-500 outline-none resize-none"
+                placeholder="Plak hier je 210 barcodes..."
+                value={barcodePasteText}
+                onChange={(e) => setBarcodePasteText(e.target.value)}
+            />
+
+            <div className="flex justify-end gap-2">
+                <button onClick={() => setShowBarcodePasteModal(false)} className="px-4 py-2 text-gray-600 rounded hover:bg-gray-100">Annuleren</button>
+                <button onClick={handleBarcodePasteProcess} className={`px-6 py-2 font-bold rounded ${themeClass}`}>Verwerken</button>
+            </div>
+        </div>
+    </div>
+)}
+
+{/* MANUAL MODAL */}
+                    {showManualModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-96">
+                                <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${themeText}`}>{Icons.Plus} Restant Toevoegen ({activeCountry})</h2>
+                                <p className="text-sm text-gray-500 mb-4">Voeg een container toe. Telt NIET mee voor de huidige trailer.</p>
+                                <form onSubmit={handleManualAddSubmit}>
+                                    <input ref={manualInputRef} type="text" value={manualInput} onChange={(e) => setManualInput(e.target.value)} placeholder="Scan barcode..." className="w-full border-2 border-gray-300 rounded p-3 mb-4 focus:border-orange-500 focus:outline-none" autoFocus />
+                                    <div className="flex justify-end gap-2">
+                                        <button type="button" onClick={() => setShowManualModal(false)} className="px-4 py-2 text-gray-600 rounded hover:bg-gray-100">Annuleren</button>
+                                        <button type="submit" className={`px-4 py-2 font-bold rounded ${themeClass}`}>Toevoegen</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* LOGIN MODAL */}
+                    {showLogin && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-80">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-700">{Icons.Lock} Admin Login</h2>
+                                <form onSubmit={handleLogin}>
+                                    <input 
+                                        ref={pinInputRef} 
+                                        type="password" 
+                                        inputMode="numeric" 
+                                        value={pinInput} 
+                                        onChange={(e) => setPinInput(e.target.value)} 
+                                        placeholder="PIN Code" 
+                                        className="w-full border-2 border-gray-300 rounded p-3 mb-4 text-center text-xl tracking-widest focus:border-blue-500 focus:outline-none" 
+                                        autoFocus 
+                                    />
+                                    <div className="flex justify-end gap-2">
+                                        <button type="button" onClick={() => setShowLogin(false)} className="px-4 py-2 text-gray-600 rounded hover:bg-gray-100">Annuleren</button>
+                                        <button type="submit" className="px-6 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700">Login</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                                    {showTrailerModal && (
+                          <div className="fixed inset-0 bg-red-600 bg-opacity-90 flex items-center justify-center z-50 p-4 no-print">
+                            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-lg text-center">
+                                <div className="mx-auto bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mb-4"><div className="text-red-600 transform scale-150">{Icons.Truck}</div></div>
+                                <h2 className="text-3xl font-black text-gray-800 mb-2">TRAILER {trailerStats.number} IS VOL!</h2>
+                                <p className="text-xl text-gray-600 mb-6">Aantal gescand: <b>{trailerStats.count}</b> / {trailerLimit}</p>
+                                <div className="flex flex-col gap-3">
+                                    <button onClick={confirmTrailerSwitch} className={`w-full py-4 font-bold text-xl rounded-xl shadow-lg ${themeClass}`}>SLUIT TRAILER & DOWNLOAD</button>
+                                    <button onClick={() => setShowTrailerModal(false)} className="text-gray-400 hover:text-gray-600 text-sm mt-2">Annuleren (Terug naar scannen)</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showSettings && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-96">
+                                <h2 className={`text-xl font-bold mb-4 ${themeText} cursor-pointer select-none`}>
+                                    {Icons.Settings} Instellingen
+                                </h2>
+                                
+                                <div className="mb-4">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <div className={`w-10 h-6 rounded-full p-1 transition-colors ${doubleCheckMode ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                            <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${doubleCheckMode ? 'translate-x-4' : ''}`}></div>
+                                        </div>
+                                        <input type="checkbox" className="sr-only" checked={doubleCheckMode} onChange={(e) => setDoubleCheckMode(e.target.checked)} />
+                                        <span className="text-sm font-bold text-gray-700">Verplicht 010+210 Verificatie</span>
+                                    </label>
+                                    <p className="text-xs text-gray-500 mt-1 ml-12">Dwingt eerst 010 scan af (Doos) gevolgd door 210 scan (Label).</p>
+                                </div>
+
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Max Aantal per Trailer</label>
+                                <input type="number" value={trailerLimit} onChange={(e) => setTrailerLimit(parseInt(e.target.value) || 44)} className="w-full border p-2 rounded mb-4" />
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Standaard Emailadres</label>
+                                <input type="email" value={emailRecipient} onChange={(e) => setEmailRecipient(e.target.value)} className="w-full border p-2 rounded mb-4" />
+                                <div className="mt-4 border-t pt-4">
+                                    
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Feestdagen (Overslaan)</label>
+                                    
+                                    {/* Country Toggle in Settings */}
+                                    <div className="flex bg-gray-100 rounded p-1 mb-3">
+                                        <button onClick={() => setSettingsCountry('BE')} className={`flex-1 py-1 text-xs font-bold rounded ${settingsCountry === 'BE' ? 'bg-be-green text-white' : 'text-gray-500'}`}>BE 🇧🇪</button>
+                                        <button onClick={() => setSettingsCountry('NL')} className={`flex-1 py-1 text-xs font-bold rounded ${settingsCountry === 'NL' ? 'bg-nl-orange text-white' : 'text-gray-500'}`}>NL 🇳🇱</button>
+                                    </div>
+
+                                    <div className="flex gap-2 mb-2">
+                                        <input type="date" className="border p-1 rounded flex-1" id="holidayInput" ref={holidayInputRef} />
+                                        <button onClick={addHoliday} className="bg-green-500 text-white px-3 rounded">+</button>
+                                    </div>
+                                    <div className="max-h-32 overflow-y-auto border rounded p-2 bg-gray-50">
+                                        {(skipDates[settingsCountry] || []).length === 0 ? <span className="text-gray-400 text-xs italic">Geen feestdagen voor {settingsCountry}</span> : 
+                                            (skipDates[settingsCountry] || []).map(date => (
+                                                <div key={date} className="flex justify-between items-center text-sm mb-1">
+                                                    <span>{new Date(date).toLocaleDateString('nl-NL')}</span>
+                                                    <button onClick={() => removeHoliday(date)} className="text-red-500 font-bold">x</button>
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                </div>
+                                <div className="flex justify-end mt-4"><button onClick={() => { setShowSettings(false); }} className={`px-4 py-2 font-bold rounded ${themeClass}`}>Opslaan</button></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showImport && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 no-print">
+                            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 flex flex-col h-[80vh]">
+                                <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${themeText}`}>{Icons.Clipboard} Data Importeren</h2>
+                                
+                                <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2 bg-gray-100 p-2 rounded">
+                                    <label className="flex items-center gap-2 cursor-pointer bg-white p-2 rounded border border-gray-200 hover:border-blue-300">
+                                        <input type="radio" name="importMode" checked={importMode === 'BE'} onChange={() => setImportMode('BE')} />
+                                        <span className="text-sm font-bold">BE 🇧🇪<br/><span className="text-xs font-normal text-gray-500">Weekschema</span></span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer bg-white p-2 rounded border border-gray-200 hover:border-blue-300">
+                                        <input type="radio" name="importMode" checked={importMode === 'NL_TLB'} onChange={() => setImportMode('NL_TLB')} />
+                                        <span className="text-sm font-bold">NL - TLB 🇳🇱<br/><span className="text-xs font-normal text-gray-500">Tilburg Depot</span></span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer bg-white p-2 rounded border border-gray-200 hover:border-blue-300">
+                                        <input type="radio" name="importMode" checked={importMode === 'NL_BKR'} onChange={() => setImportMode('NL_BKR')} />
+                                        <span className="text-sm font-bold">NL - BKR 🇳🇱<br/><span className="text-xs font-normal text-gray-500">Berkel Depot</span></span>
+                                    </label>
+                                </div>
+
+                                <div className="bg-blue-50 p-3 rounded border border-blue-100 mb-3 text-sm text-blue-800">
+                                    {importMode === 'BE' ? 
+                                        "Plak lijst voor BE (3 kolommen: Filiaalnr, Plaats, Max). Alleen bestaande BE data wordt vervangen." : 
+                                     importMode === 'NL_TLB' ?
+                                        "Plak lijst voor Tilburg (3 kolommen: Filiaalnr, Plaats, Max). Alleen bestaande TLB data wordt vervangen." :
+                                        "Plak lijst voor Berkel (3 kolommen: Filiaalnr, Plaats, Max). Alleen bestaande BKR data wordt vervangen."}
+                                </div>
+                                <textarea className="flex-1 border p-4 font-mono text-xs rounded mb-4 focus:ring-2 ring-orange-500 outline-none resize-none" placeholder="Plak hier je Excel data..." value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
+                                <div className="flex justify-between">
+                                    <button onClick={clearDatabase} className="px-4 py-2 text-red-600 border border-red-200 rounded hover:bg-red-50 flex items-center gap-2">{Icons.Trash} Wis Database</button>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setShowImport(false)} className="px-4 py-2 text-gray-600 rounded hover:bg-gray-100">Annuleren</button>
+                                        <button onClick={handlePasteImport} className={`px-6 py-2 font-bold rounded ${themeClass}`}>Importeren</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="max-w-7xl mx-auto space-y-6">
+                        {/* HEADER */}
+                        <header className={`bg-white p-4 rounded-xl shadow-sm border-b-4 flex flex-col md:flex-row justify-between gap-4 items-center no-print ${themeBorder}`}>
+                            <div>
+                                <h1 className="text-2xl font-bold flex items-center gap-2"><span className={themeText}>{Icons.Database}</span> Outbound Data Collector</h1>
+                                <div className="text-sm text-gray-500 mt-1">Scans: <b>{scanHistory.length}</b> | Trailer Limiet: <b>{trailerLimit}</b></div>
+                            </div>
+                            
+                            {/* COUNTRY TOGGLE */}
+                            <div className="bg-gray-200 p-1 rounded-lg flex text-sm font-bold">
+                                <button onClick={() => setActiveCountry('BE')} className={`px-4 py-2 rounded-md transition-all ${activeCountry === 'BE' ? 'bg-be-green text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}>BE 🇧🇪</button>
+                                <button onClick={() => setActiveCountry('NL')} className={`px-4 py-2 rounded-md transition-all ${activeCountry === 'NL' ? 'bg-nl-orange text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}>NL 🇳🇱</button>
+                            </div>
+
+                            <div className="flex-1 max-w-md mx-4 flex flex-col gap-1">
+                                <div className="flex items-center gap-2 w-full">
+                                    <div className="flex-1 bg-gray-100 rounded-lg p-2 border border-gray-200">
+                                        <div className="flex justify-between text-xs font-bold mb-1"><span className="text-gray-600">Trailer {trailerStats.number} {activeCountry === 'NL' ? `(${activeDepot})` : ''}</span><span className={themeText}>{trailerStats.count} / {trailerLimit}</span></div>
+                                        <div className="w-full bg-gray-300 rounded-full h-2.5"><div className={`h-2.5 rounded-full progress-bar ${themeClass}`} style={{ width: `${(trailerStats.count / trailerLimit) * 100}%` }}></div></div>
+                                    </div>
+                                    <button onClick={manualTrailerSwitch} className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg border border-gray-200 text-xs font-bold text-center" title="Trailer handmatig vol melden">{Icons.Truck} <br/>Wissel</button>
+                                </div>
+                                {activeCountry === 'NL' && (
+                                    <div className="flex bg-orange-100 rounded-lg p-1 gap-1">
+                                        <button onClick={() => setActiveDepot('TLB')} className={`flex-1 text-xs font-bold py-1 rounded transition-colors ${activeDepot === 'TLB' ? 'bg-orange-500 text-white shadow' : 'text-orange-700 hover:bg-orange-200'}`}>TLB (Tilburg)</button>
+                                        <button onClick={() => setActiveDepot('BKR')} className={`flex-1 text-xs font-bold py-1 rounded transition-colors ${activeDepot === 'BKR' ? 'bg-orange-500 text-white shadow' : 'text-orange-700 hover:bg-orange-200'}`}>BKR (Berkel)</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button onClick={() => setShowManualModal(true)} className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition font-bold text-sm">{Icons.Plus} Restant</button>
+                                
+                                {isAdmin && (
+                                    <>
+                                        <button onClick={() => setShowBufferModal(true)} className="flex items-center gap-2 bg-gray-200 text-gray-700 border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-300 transition font-bold text-sm" title="Buffer Beheer">{Icons.Archive}</button>
+                                        <button onClick={() => setShowBarcodePasteModal(true)} className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition font-bold text-sm" title="210 barcodes plakken">{Icons.Upload}</button>
+                                        <button onClick={() => setShowSettings(true)} className="p-2 text-gray-500 hover:text-gray-700 bg-gray-100 rounded-lg" title="Instellingen">{Icons.Settings}</button>
+                                        <button onClick={() => setShowImport(true)} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition font-bold shadow text-sm ${themeClass}`}>{Icons.Database} Data</button>
+                                    </>
+                                )}
+                                
+                                <button onClick={() => setShowReport(!showReport)} className="flex items-center gap-2 bg-gray-800 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition text-sm">{Icons.FileText}</button>
+                                
+                                {isAdmin ? (
+                                    <button onClick={handleLogout} className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition" title="Admin Uitloggen">{Icons.Unlock}</button>
+                                ) : (
+                                    <button onClick={() => setShowLogin(true)} className="bg-gray-200 text-gray-500 p-2 rounded-lg hover:bg-gray-300 transition" title="Admin Login">{Icons.Lock}</button>
+                                )}
+                            </div>
+                        </header>
+
+                        {!showReport ? (
+                            <div className="grid lg:grid-cols-4 gap-6 no-print">
+                                {/* KOLOM 1+2: SCANNER & STATUS */}
+                                <div className="lg:col-span-2 space-y-6">
+                                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 relative">
+                                        <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-100">
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700">SCAN BARCODE ({activeCountry} {activeCountry==='NL'?`- ${activeDepot}`:''})</label>
+                                                <div className="text-xs text-gray-400">
+                                                    {doubleCheckMode ? (verificationId ? `1. RC VERIFIEERD (${verificationId}). NU SCAN LABEL` : "1. SCAN DOOS (010) OF LABEL (210)") : "Start met 210"}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 bg-gray-100 px-4 py-2 rounded-lg"><span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Verzonden:</span><span className={`text-3xl font-black leading-none ${themeText}`}>{getSuccessCount()}</span></div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 mb-2 p-1 bg-gray-100 rounded">
+                                             <span className="font-bold text-xs uppercase text-gray-500 ml-1">Locatie:</span>
+                                             <button 
+                                                 onClick={() => setScanMode('LADEN')}
+                                                 className={`px-3 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${scanMode === 'LADEN' ? 'bg-blue-600 text-white shadow' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                                             >
+                                                 {Icons.Save} 🏗️ Dock (Definitief)
+                                             </button>
+                                             <button 
+                                                 onClick={() => setScanMode('VOORSCAN')}
+                                                 className={`px-3 py-1 rounded text-xs font-bold flex items-center gap-1 transition-all ${scanMode === 'VOORSCAN' ? 'bg-purple-600 text-white shadow' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                                             >
+                                                 {Icons.Eye} 🎞️ Band (Voorscan)
+                                             </button>
+                                        </div>
+                                        
+                                        {/* VERIFICATION BAR (V70 Manual Toggle) */}
+                                        {doubleCheckMode && (
+                                            <div className="mb-4 flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                                                <div className={`text-sm font-bold transition-all flex-1 text-center ${verificationId ? 'text-blue-700 animate-pulse-blue' : 'text-gray-500'}`}>
+                                                    {verificationId ? `DOOS: ${verificationId} - WACHT OP LABEL...` : "SCAN EERST DOOS (010)"}
+                                                </div>
+                                                <label className="flex items-center gap-2 cursor-pointer bg-white px-2 py-1 rounded border shadow-sm">
+                                                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${exceptionMode ? 'bg-orange-500' : 'bg-gray-300'}`}>
+                                                        <div className={`w-3 h-3 bg-white rounded-full shadow-md transform transition-transform ${exceptionMode ? 'translate-x-4' : ''}`}></div>
+                                                    </div>
+                                                    <input type="checkbox" className="sr-only" checked={exceptionMode} onChange={(e) => setExceptionMode(e.target.checked)} />
+                                                    <span className="text-xs font-bold text-gray-600">Uitzondering: Depot / Sale</span>
+                                                </label>
+                                            </div>
+                                        )}
+
+                                        <form onSubmit={handleScan}>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">{Icons.ScanLine}</span>
+                                                <input 
+                                                    ref={inputRef} 
+                                                    type="text" 
+                                                    value={scanInput} 
+                                                    onChange={(e) => setScanInput(e.target.value)} 
+                                                    placeholder={verificationId ? `Scan Label voor ${verificationId}...` : (exceptionMode ? "Scan Label (Depot)..." : `Scan ${activeCountry} barcode...`)} 
+                                                    className={`w-full text-4xl p-4 pl-12 border-2 rounded-lg focus:ring-4 outline-none transition font-mono text-center 
+                                                        ${verificationId ? 'border-blue-500 ring-blue-100' : 'border-gray-300'}
+                                                        ${exceptionMode ? 'border-orange-400 ring-orange-100' : ''}
+                                                        ${(!verificationId && !exceptionMode && activeCountry === 'NL') ? 'focus:border-orange-500 focus:ring-orange-100' : (!verificationId && !exceptionMode ? 'focus:border-green-500 focus:ring-green-100' : '')}
+                                                        ${scanMode === 'VOORSCAN' ? 'border-purple-500 ring-purple-100' : ''}
+                                                    `} 
+                                                    autoFocus 
+                                                />
+                                            </div>
+                                            <div className="text-xs text-center text-gray-400 mt-2">Zoekt in database: <b>{activeCountry}</b> {scanMode === 'VOORSCAN' && <span className="text-purple-600 font-bold ml-1">(VOORSCAN MODUS)</span>}</div>
+                                        </form>
+                                    </div>
+
+                                    {/* STATUS DISPLAY */}
+                                    <div className="h-[400px]">
+                                        {scanResult && scanResult.type !== 'unknown' && scanResult.type !== 'info' && (
+                                            <div className={`h-full rounded-xl p-6 flex flex-col justify-center shadow-inner relative overflow-hidden border-l-8 transition-colors duration-300 ${scanResult.isCheckMode ? (scanResult.type === 'success' ? 'bg-purple-50 border-purple-500' : 'bg-red-100 border-red-600') : (scanResult.type === 'success' ? 'bg-green-100 border-green-500' : (scanResult.type === 'warning-max' || scanResult.type === 'warning-duplicate' || scanResult.type === 'warning-delivery') ? 'bg-red-100 border-red-600' : 'bg-orange-100 border-orange-500') }`}>
+                                                
+                                                {scanResult.trailerMsg && !scanResult.isCheckMode && (
+                                                    <div className="absolute inset-0 bg-red-600 z-50 flex flex-col items-center justify-center text-white animate-pulse">
+                                                        {Icons.Truck}
+                                                        <div className="text-4xl font-black text-center p-4">{scanResult.trailerMsg}</div>
+                                                        <div className="text-xl">Pakbon printen & nieuwe trailer starten</div>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex items-center gap-3 mb-4 relative z-10">
+                                                    {scanResult.type === 'success' ? Icons.CheckCircle : Icons.Alert}
+                                                    <div>
+                                                        <div className={`font-black text-2xl uppercase ${scanResult.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>{scanResult.msg}</div>
+                                                        <div className="text-sm font-bold bg-white px-2 py-0.5 rounded inline-block shadow-sm mt-1">{scanResult.isCheckMode ? 'Voorscan - Gereserveerd' : (scanResult.type === 'success' ? <>{Icons.Save} Opgeslagen</> : "Niet opgeslagen")}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="relative z-10 mb-4">
+                                                    <div className="text-4xl font-black truncate text-slate-800">{scanResult.store.naam}</div>
+                                                    <div className="text-xl font-mono text-slate-600">ID: {scanResult.store.id} | Route: {scanResult.store.route}</div>
+                                                    
+                                                    {/* VISUAL PROGRESS BAR */}
+                                                    {(scanResult.type === 'success' || scanResult.isCheckMode) && (
+                                                        <div className="mt-4">
+                                                            <div className="flex justify-between text-sm font-bold text-gray-600 mb-1">
+                                                                <span>Vulling Filiaal ({activeCountry}):</span>
+                                                                <span className={scanResult.isMax ? 'text-red-600' : 'text-green-600'}>{scanResult.newTotal} / {scanResult.store.max}</span>
+                                                            </div>
+                                                            <div className="w-full bg-white/50 rounded-full h-4 border border-gray-300">
+                                                                <div className={`h-4 rounded-full transition-all duration-500 ${scanResult.isMax ? 'bg-red-500' : themeClass}`} style={{width: `${Math.min((scanResult.newTotal / scanResult.store.max) * 100, 100)}%`}}></div>
+                                                            </div>
+                                                            {scanResult.isMax && <div className="text-center text-red-600 font-bold text-xs mt-1">FILIAAL ZIT VOL!</div>}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {(scanResult.type === 'success' || scanResult.isCheckMode) && (
+                                                    <div className={`relative z-10 p-3 rounded-lg mb-4 text-center font-bold text-lg border-2 ${scanResult.isSingle ? 'bg-yellow-50 border-yellow-400 text-yellow-800 animate-pulse-orange' : 'bg-white border-green-400 text-green-700'}`}>
+                                                        {scanResult.quantityMsg}
+                                                    </div>
+                                                )}
+
+                                                {scanResult.type !== 'success' && !scanResult.isCheckMode && (
+                                                    <div className="relative z-10 bg-white border-2 border-red-500 p-4 rounded-lg shadow-md animate-pulse">
+                                                        <div className="text-red-600 font-bold text-lg uppercase flex items-center gap-2">{Icons.ArrowRight} ACTIE VEREIST</div>
+                                                        <div className="text-xl font-black text-slate-800">{scanResult.bufferMsg}</div>
+                                                        {scanResult.quantityMsg && <div className="text-sm font-bold text-gray-700 mt-2 bg-gray-100 p-2 rounded">{scanResult.quantityMsg}</div>}
+                                                    </div>
+                                                )}
+
+                                                 {/* Extra Buffer Msg display for Check Mode Failures */}
+                                                 {scanResult.isCheckMode && scanResult.type !== 'success' && (
+                                                     <div className="relative z-10 bg-white border-2 border-red-500 p-4 rounded-lg shadow-md">
+                                                        <div className="text-xl font-black text-slate-800">{scanResult.bufferMsg}</div>
+                                                     </div>
+                                                 )}
+                                            </div>
+                                        )}
+                                        
+                                        {/* INFO STATE FOR 010 SCAN */}
+                                        {scanResult?.type === 'info' && (
+                                            <div className="bg-blue-50 border-l-8 border-blue-500 h-full rounded-xl p-6 flex flex-col justify-center text-center shadow-inner">
+                                                <div className="mx-auto mb-4 text-blue-500">{Icons.Link}</div>
+                                                <div className="text-blue-800 text-3xl font-black">{scanResult.msg}</div>
+                                                <div className="text-2xl font-bold text-slate-700 my-2">{scanResult.store.id} - {scanResult.store.naam}</div>
+                                                <div className="text-blue-600 text-lg mt-2 animate-pulse font-bold">{scanResult.bufferMsg}</div>
+                                            </div>
+                                        )}
+
+                                        {scanResult?.type === 'unknown' && (
+                                            <div className="bg-gray-200 border-l-8 border-gray-400 h-full rounded-xl p-6 flex flex-col justify-center text-center">
+                                                <div className="mx-auto mb-4">{Icons.XCircle}</div>
+                                                <div className="text-gray-800 text-2xl font-bold">FOUT</div>
+                                                <div className="text-gray-600 mt-2">{scanResult.msg}</div>
+                                                {scanResult.bufferMsg && <div className="text-red-600 font-bold mt-2">{scanResult.bufferMsg}</div>}
+                                                {scanResult.quantityMsg && <div className="text-gray-500 font-bold mt-2 text-sm">{scanResult.quantityMsg}</div>}
+                                            </div>
+                                        )}
+                                        {!scanResult && (
+                                            <div className="bg-white border-2 border-dashed border-gray-300 h-full rounded-xl flex flex-col items-center justify-center text-gray-400">
+                                                <div className="mb-4 opacity-50">{Icons.Package}</div>
+                                                <p className="font-medium text-lg">Klaar om te scannen ({activeCountry})</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* KOLOM 3: LIJSTEN */}
+                                <div className="lg:col-span-1 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col h-[600px]">
+                                    <div className="flex-1 flex flex-col border-b border-gray-200 min-h-0">
+                                        <div className="p-3 bg-orange-50 border-b border-orange-200 font-bold text-orange-800 flex items-center gap-2 text-xs uppercase tracking-wide sticky top-0 z-10">{Icons.Layers} Filialen met 1 RC ({incompleteStores.length})</div>
+                                        <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-white custom-scroll">
+                                            {incompleteStores.length === 0 ? <div className="text-center text-gray-400 italic text-xs mt-4">Geen</div> : incompleteStores.map(store => (
+                                                <div key={store.id} className="bg-orange-50 border border-orange-100 p-2 rounded flex justify-between items-center animate-fade-in">
+                                                    <div><div className="font-bold text-sm">{store.naam}</div><div className="text-[10px] text-gray-500">ID: {store.id}</div></div>
+                                                    <div className="bg-white border border-orange-300 w-6 h-6 flex items-center justify-center rounded-full font-bold text-orange-600 text-xs">{store.count}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 flex flex-col bg-gray-50 min-h-0">
+                                        <div className="p-3 bg-green-50 border-t border-b border-green-200 font-bold text-green-800 flex items-center gap-2 text-xs uppercase tracking-wide sticky top-0 z-10">{Icons.CheckCircle} Volle Winkels ({fullStores.length})</div>
+                                        <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scroll">
+                                            {fullStores.length === 0 ? <div className="text-center text-gray-400 italic text-xs mt-4">Nog geen</div> : fullStores.map(store => (
+                                                <div key={store.id} className="bg-green-55 border border-green-200 p-2 rounded flex justify-between items-center animate-fade-in opacity-75">
+                                                    <div><div className="font-bold text-green-900 text-sm">{store.naam}</div><div className="text-[10px] text-green-700">ID: {store.id}</div></div>
+                                                    <div className="text-xs font-bold text-green-800">{store.count} / {store.max}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* KOLOM 4: HISTORIE & TOOLS */}
+                                <div className="lg:col-span-1 flex flex-col h-[600px] space-y-4">
+                                    <div className="bg-white rounded-xl shadow overflow-hidden flex-1 flex flex-col">
+                                        <div className="p-2 bg-gray-50 border-b space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-bold text-xs">Scan Historie ({activeCountry} {activeCountry==='NL'?activeDepot:''})</span>
+                                                {isAdmin && (
+                                                    <button onClick={clearHistory} className="text-red-500 hover:text-red-700 border border-red-200 rounded px-2 py-1 hover:bg-red-50 text-xs flex items-center gap-1" title="Wis Geschiedenis">{Icons.Trash}</button>
+                                                )}
+                                            </div>
+                                            
+                                            {/* SEARCH INPUT */}
+                                            <div className="relative">
+                                                <span className="absolute left-2 top-1.5 text-gray-400">{Icons.Search}</span>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Zoek filiaal, barcode..." 
+                                                    value={historySearchQuery}
+                                                    onChange={(e) => setHistorySearchQuery(e.target.value)}
+                                                    className="w-full border p-1 pl-7 rounded text-xs bg-white focus:ring-2 ring-blue-200 outline-none"
+                                                />
+                                            </div>
+
+                                            <select 
+                                                value={historyTrailerFilter} 
+                                                onChange={(e) => setHistoryTrailerFilter(e.target.value)} 
+                                                className="w-full border p-1 rounded text-xs bg-white focus:ring-2 ring-blue-200 outline-none"
+                                            >
+                                                <option value="all">Alle Trailers tonen</option>
+                                                {getUniqueTrailers().map(nr => (
+                                                    <option key={nr} value={nr}>Trailer {nr}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto custom-scroll">
+                                            <table className="w-full text-xs text-left">
+                                                <thead className="bg-gray-50 sticky top-0">
+                                                    <tr><th className="p-2">Tijd</th><th className="p-2">Barcode</th><th className="p-2">Trailer</th><th className="p-2">Filiaal</th><th className="p-2"></th></tr>
+                                                </thead>
+                                                <tbody className="divide-y">
+                                                    {displayedHistory.map(log => (
+                                                        <tr key={`row-${log.id}`} className="hover:bg-gray-50">
+                                                            <td className="p-2 text-gray-500 w-12">{log.timestamp.slice(0,5)}</td>
+                                                            <td className="p-2 font-mono text-gray-600">{log.barcode}</td>
+                                                            <td className={`p-2 font-bold text-center ${log.trailerNr === 'REST' ? 'text-blue-500' : 'text-gray-800'}`}>{log.trailerNr}</td>
+                                                            <td className="p-2 truncate max-w-[100px]">{log.storeName}</td>
+                                                            <td className="p-2 text-right"><button onClick={() => deleteLog(log.id)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50">{Icons.Trash}</button></td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                            <div className="p-2 text-center text-xs text-gray-400 border-t">
+                                                Toont laatste {displayedHistory.length} van {filteredScanHistory.length} scans.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <select 
+                                            className="border p-2 rounded flex-1 text-sm bg-white" 
+                                            value={selectedExportTrailer} 
+                                            onChange={(e) => {
+                                                setSelectedExportTrailer(e.target.value);
+                                                // Auto-filter view to match export selection if not 'current'
+                                                if(e.target.value !== 'current') {
+                                                    setHistoryTrailerFilter(e.target.value);
+                                                } else {
+                                                    // Explicitly set filter to the current active trailer to fix display issue
+                                                    setHistoryTrailerFilter(trailerStats.number.toString());
+                                                }
+                                            }}
+                                        >
+                                            <option value="current">Huidige Trailer ({trailerStats.number})</option>
+                                            {getUniqueTrailers().map(nr => (<option key={nr} value={nr}>Trailer {nr}</option>))}
+                                        </select>
+                                        <div className="flex flex-col gap-1 w-1/2">
+                                            <button onClick={exportHistoryToTXT} className={`hover:opacity-90 text-white font-bold py-2 px-3 rounded shadow flex items-center justify-center gap-1 text-xs whitespace-nowrap ${themeClass}`}>{Icons.Download} Download</button>
+                                            <button onClick={mailHistoryTXT} className={`hover:opacity-90 text-white font-bold py-2 px-3 rounded shadow flex items-center justify-center gap-1 text-xs whitespace-nowrap ${themeClass}`}>{Icons.Mail} Mail</button>
+                                        </div>
+                                    </div>
+                                    <button onClick={exportAllToTXT} className={`w-full hover:opacity-90 text-white font-bold py-3 px-3 rounded shadow flex items-center justify-center gap-2 text-xs whitespace-nowrap ${themeClass}`}>{Icons.Download} Download Totaal ({activeCountry})</button>
+{activeCountry === 'NL' && (
+    <button 
+        onClick={() => exportAllToTXT('ALL_NL')} 
+        className="w-full mt-2 hover:opacity-90 text-white font-bold py-3 px-3 rounded shadow flex items-center justify-center gap-2 text-xs whitespace-nowrap bg-orange-800 border-2 border-orange-600"
+    >
+        {Icons.Download} DOWNLOAD TLB + BKR (SAMEN)
+    </button>
+)}
+                                </div>
+                            </div>
+                        ) : (
+                            /* RAPPORTAGE SCHERM */
+                            <div className="bg-white rounded-xl shadow-lg p-8 animate-fade-in">
+                                {(() => {
+                                    // Calculate Report Totals dynamically
+                                    let totalCount = 0;
+                                    let countTLB = 0;
+                                    let countBKR = 0;
+                                    let onderwegCount = 0;
+                                    let bufferCount = 0; //
+
+                                    if (reportFilter === 'all') {
+                                        const relevantHistory = scanHistory.filter(i => i.country === activeCountry);
+                                        totalCount = relevantHistory.filter(i => isVisibleStatus(i.status)).length;
+                                        onderwegCount = relevantHistory.filter(i => i.status === STATUS_ONDERWEG).length;
+                                        
+                                        if (activeCountry === 'NL') {
+                                            countTLB = relevantHistory.filter(i => i.depot === 'TLB' && isVisibleStatus(i.status)).length;
+                                            countBKR = relevantHistory.filter(i => i.depot === 'BKR' && isVisibleStatus(i.status)).length;
+                                        }
+                                   } else {
+                                        const stats = getDailyStats();
+                                        const filtered = stats.filter(stat => {
+                                            if (reportFilter === 'single') return stat.total === 1;
+                                            if (reportFilter === 'full') return stat.total >= stat.store.max;
+                                            if (reportFilter === 'onderweg') return stat.onderweg > 0;
+                                            if (reportFilter === 'buffer') return stat.buffer > 0; // <--- NIEUW FILTER
+                                            if (reportFilter === 'zero') return stat.total === 0 && stat.onderweg === 0;
+                                            return true;
+                                        });
+                                        
+                                        // Special handling for 'zero' filter: count STORES instead of items
+                                        if (reportFilter === 'zero') {
+                                            totalCount = filtered.length; 
+                                        } else {
+                                            totalCount = filtered.reduce((acc, curr) => acc + curr.total, 0);
+                                        }
+
+                                        if (reportFilter === 'onderweg') {
+                                             totalCount = filtered.reduce((acc, curr) => acc + curr.onderweg, 0); 
+                                        }
+
+                                        if (reportFilter === 'buffer') {
+                                            totalCount = filtered.reduce((acc, curr) => acc + curr.buffer, 0);
+                                        }
+                                        
+                                        if (activeCountry === 'NL') {
+                                            // Als filter buffer is, tel dan de buffer items per depot, anders de geladen items
+                                            const field = reportFilter === 'buffer' ? 'buffer' : 'total';
+                                            countTLB = filtered.filter(s => s.store.depot === 'TLB').reduce((acc, curr) => acc + curr[field], 0);
+                                            countBKR = filtered.filter(s => s.store.depot === 'BKR').reduce((acc, curr) => acc + curr[field], 0);
+                                        }
+                                    }
+
+                                    return (
+                                        <>
+                                            <div className="flex justify-between items-start mb-8 border-b pb-4 no-print">
+                                                <div>
+                                                    <h1 className="text-3xl font-bold text-gray-800">Dagrapport ({activeCountry})</h1>
+                                                    <p className="text-sm text-gray-500">Datum: {new Date().toLocaleDateString('nl-NL')}</p>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-2">
+                                                    <div className="text-right">
+                                                        <div className="text-4xl font-bold text-blue-600">
+                                                            {totalCount}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">
+                                                            {reportFilter === 'onderweg' ? 'Totaal Nog Onderweg' : 
+                                                             reportFilter === 'zero' ? 'Filialen Nog Niet Gestart' :
+                                                             reportFilter === 'all' ? 'Totaal Scans' : 
+                                                             reportFilter === 'single' ? 'Scans (Alleen 1 RC)' : 'Scans (Volle Winkels)'}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* NL Split Display */}
+                                                    {activeCountry === 'NL' && reportFilter !== 'onderweg' && reportFilter !== 'zero' && (
+                                                        <div className="flex gap-4 mt-2 bg-gray-50 p-2 rounded border border-gray-200">
+                                                            <div className="text-center px-2 border-r border-gray-300">
+                                                                <div className="text-xl font-bold text-orange-600">{countTLB}</div>
+                                                                <div className="text-xs text-gray-500 font-bold">TLB</div>
+                                                            </div>
+                                                            <div className="text-center px-2">
+                                                                <div className="text-xl font-bold text-orange-600">{countBKR}</div>
+                                                                <div className="text-xs text-gray-500 font-bold">BKR</div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* For Print View Header */}
+                                            <div className="print-only mb-4">
+                                                <h1 className="text-2xl font-bold">Dagstaat Outbound - {new Date().toLocaleDateString('nl-NL')} ({activeCountry})</h1>
+                                                <p className="text-lg mb-2">Filter: {reportFilter === 'all' ? 'Alles' : reportFilter === 'single' ? 'Alleen 1 RC (Start)' : 'Volle Winkels'}</p>
+                                                
+                                                {activeCountry === 'NL' && (
+                                                    <div className="flex gap-6 mb-4 border-b pb-2">
+                                                        <div><strong>Totaal:</strong> {totalCount}</div>
+                                                        <div><strong>TLB (Tilburg):</strong> {countTLB}</div>
+                                                        <div><strong>BKR (Berkel):</strong> {countBKR}</div>
+                                                    </div>
+                                                )}
+                                                {activeCountry !== 'NL' && (
+                                                    <div className="mb-4 border-b pb-2"><strong>Totaal:</strong> {totalCount}</div>
+                                                )}
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+
+                                <div className="flex gap-2 mb-6 no-print overflow-x-auto pb-2">
+                                    <button onClick={() => setReportFilter('all')} className={`px-4 py-2 rounded font-bold text-sm whitespace-nowrap ${reportFilter === 'all' ? themeClass : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Alles (Master)</button>
+                                    <button onClick={() => setReportFilter('zero')} className={`px-4 py-2 rounded font-bold text-sm whitespace-nowrap ${reportFilter === 'zero' ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Nog Niet Gestart (0)</button>
+                                    <button onClick={() => setReportFilter('single')} className={`px-4 py-2 rounded font-bold text-sm whitespace-nowrap ${reportFilter === 'single' ? themeClass : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Alleen 1 RC</button>
+                                    <button onClick={() => setReportFilter('full')} className={`px-4 py-2 rounded font-bold text-sm whitespace-nowrap ${reportFilter === 'full' ? themeClass : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Volle Winkels</button>
+                                    <button onClick={() => setReportFilter('buffer')} className={`px-4 py-2 rounded font-bold text-sm whitespace-nowrap flex items-center gap-1 ${reportFilter === 'buffer' ? 'bg-pink-600 text-white shadow' : 'bg-pink-50 text-pink-700 hover:bg-pink-100 border border-pink-200'}`}>{Icons.Layers} In Buffer</button>
+                                    <button onClick={() => setReportFilter('onderweg')} className={`px-4 py-2 rounded font-bold text-sm whitespace-nowrap flex items-center gap-1 ${reportFilter === 'onderweg' ? 'bg-purple-600 text-white shadow' : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'}`}>{Icons.Eye} Restcontrole (Nog Onderweg)</button>
+                                </div>
+                                
+                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 report-grid">
+                                    {getDailyStats().filter(stat => {
+                                        if (reportFilter === 'buffer') return stat.buffer > 0;
+                                        if (stat.buffer > 0 && stat.total === 0) return false;
+                                        if (reportFilter === 'single') return stat.total === 1;
+                                        if (reportFilter === 'full') return stat.total >= stat.store.max;
+                                        if (reportFilter === 'onderweg') return stat.onderweg > 0;
+                                        if (reportFilter === 'zero') return stat.total === 0 && stat.onderweg === 0;
+                                        return true;
+                                    }).length === 0 ? (
+                                        <div className="col-span-3 text-center p-8 text-gray-400 italic">Geen filialen gevonden voor dit filter.</div>
+                                    ) : (
+                                        getDailyStats().filter(stat => {
+                                            if (reportFilter === 'buffer') return stat.buffer > 0;
+                                            if (stat.buffer > 0 && stat.total === 0) return false;
+                                            if (reportFilter === 'single') return stat.total === 1;
+                                            if (reportFilter === 'full') return stat.total >= stat.store.max;
+                                            if (reportFilter === 'onderweg') return stat.onderweg > 0;
+                                            if (reportFilter === 'zero') return stat.total === 0 && stat.onderweg === 0;
+                                            return true;
+                                        }).map(stat => (
+                                            <div key={stat.store.id} className={`border rounded-lg p-4 transition report-card ${
+                                                reportFilter === 'buffer' ? 'border-pink-300 bg-pink-50' :
+                                                (stat.onderweg > 0 && reportFilter === 'onderweg' ? 'border-purple-300 bg-purple-50' : 
+                                                (stat.total === 0 ? 'border-red-300 bg-red-50' : 
+                                                (stat.total >= stat.store.max ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white')))
+                                            }`}>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <div className="text-lg font-bold">{stat.store.naam}</div>
+                                                        <div className="text-xs text-gray-500 uppercase font-bold">{stat.store.id}</div>
+                                                    </div>
+                                                    
+                                                    {reportFilter === 'onderweg' ? (
+                                                        <div className="text-2xl font-bold text-purple-600">{stat.onderweg}</div>
+                                                    ) : reportFilter === 'buffer' ? (
+                                                        <div className="text-2xl font-bold text-pink-600">{stat.buffer}</div>
+                                                    ) : (
+                                                        <div className={`text-2xl font-bold ${stat.total === 1 ? 'text-orange-500' : (stat.total === 0 ? 'text-red-500' : 'text-blue-600')}`}>
+                                                            {stat.total} {stat.total === 1 && "⚠️"}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {stat.total === 0 && reportFilter === 'all' && <div className="text-xs text-red-600 font-bold bg-white px-1 rounded border border-red-200 inline-block mb-1">NOG NIET GELADEN (0)</div>}
+                                                {stat.total === 1 && reportFilter !== 'onderweg' && reportFilter !== 'buffer' && <div className="text-xs text-orange-600 font-bold">LET OP: Nog 1 nodig!</div>}
+                                                
+                                                {reportFilter === 'onderweg' && <div className="text-xs text-purple-700 font-bold">Containers onderweg naar dock</div>}
+                                                {reportFilter === 'buffer' && <div className="text-xs text-pink-700 font-bold">Items in Buffer</div>}
+
+                                                {reportFilter !== 'onderweg' && reportFilter !== 'buffer' && (
+                                                    <>
+                                                        <div className="mt-2 w-full bg-gray-200 rounded-full h-2 visual-bar-bg">
+                                                            <div className={`h-2 rounded-full ${stat.total >= stat.store.max ? 'bg-red-500' : 'bg-blue-500'}`} style={{width: `${Math.min((stat.total / (stat.store.max || 1)) * 100, 100)}%`}}></div>
+                                                        </div>
+                                                        <div className="text-xs text-right text-gray-400 mt-1 visual-bar-bg">{stat.total} / {stat.store.max}</div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="mt-8 text-center print:hidden flex gap-4 justify-center no-print">
+                                    <button onClick={() => window.print()} className={`text-white px-8 py-3 rounded-lg font-bold ${themeClass}`}>Print Rapport</button>
+                                    <button onClick={exportHistoryToCSV} className={`text-white px-8 py-3 rounded-lg font-bold ${themeClass}`}>Download CSV</button>
+                                    <button onClick={() => setShowReport(false)} className="bg-gray-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-700">Terug</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
